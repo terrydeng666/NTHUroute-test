@@ -133,7 +133,7 @@ Edge_2d::Edge_2d()
 
 	  history(1),
 
-	  used_net(128)
+	  used_net(5)
 
 {
 }

@@ -466,8 +466,6 @@ int main(int argc, char *argv[])
     prog_start = high_resolution_clock::now();
 
     // clock_t t1 = clock();
-    // std::cout << "====================================" << std::endl;
-    // std::cout << "====================================" << std::endl;
     std::cout << "====================================" << std::endl;
     std::cout << "====================================" << std::endl;
     printMemoryUsage();
@@ -477,13 +475,9 @@ int main(int argc, char *argv[])
     std::cout << "main() || construct_2d_tree() || end" << std::endl;
     std::cout << "====================================" << std::endl;
     std::cout << "====================================" << std::endl;
-    std::cout << "====================================" << std::endl;
-    std::cout << "====================================" << std::endl;
     // clock_t t2 = clock();
 
 
-    std::cout << "====================================" << std::endl;
-    std::cout << "====================================" << std::endl;
     std::cout << "====================================" << std::endl;
     std::cout << "====================================" << std::endl;
     std::cout << "main() || Post_processing() || start" << std::endl;
@@ -495,8 +489,7 @@ int main(int argc, char *argv[])
     std::cout << "main() || Post_processing() || end" << std::endl;
     std::cout << "====================================" << std::endl;
     std::cout << "====================================" << std::endl;
-    std::cout << "====================================" << std::endl;
-    std::cout << "====================================" << std::endl;
+
 
     // clock_t t3 = clock();
 
