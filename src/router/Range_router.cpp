@@ -318,13 +318,13 @@ static void expand_range(int x1, int y1, int x2, int y2, int interval_index)
 //the original path.
 static void range_router(Two_pin_element_2d * two_pin)
 {
-	if ( !check_path_no_overflow(&two_pin->path,two_pin->net_id, false) )
+	if ( !check_path_no_overflow(&two_pin->path,two_pin->net_id, false) ) //is overflow
 	{
 		++total_twopin;
         //Coordinate_2d pin1 = two_pin->pin1;
         //Coordinate_2d pin2 = two_pin->pin2;
-
-        NetDirtyBit[two_pin->net_id] = true;
+		
+        NetDirtyBit[two_pin->net_id] = true;	// ?? also set true for update_congestion_map_remove_two_pin_net 
 
         update_congestion_map_remove_two_pin_net(two_pin);
 
@@ -468,7 +468,7 @@ void specify_all_range(void)
             delete range_vector[s];
         }
 		range_vector.clear();
-		sort(interval_list[i].grid_edge_vector.begin(),
+		sort(interval_list[i].grid_edge_vector.begin(),	//sort edge in same interval by congestion
              interval_list[i].grid_edge_vector.end(),
              comp_grid_edge);
 
@@ -493,7 +493,7 @@ void specify_all_range(void)
                 expand_range(x, y, nei_x, nei_y, i);
             }
 		}
-
+		//range vector store the expand bounding box for each edge
 		twopin_list.clear();
 		twopin_range_index_list.clear();
 		for (int j = 0; j<(int)range_vector.size(); ++j)

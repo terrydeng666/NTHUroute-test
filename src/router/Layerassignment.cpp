@@ -50,21 +50,28 @@ double DP_TIME = 0;
 
 int CNT = 1;
 
-struct {
+struct
+{
     int idx;
     int val;
 } ans;
-typedef struct {
+
+typedef struct
+{
     int val;
     Coordinate_3d *pi;
 } DP_NODE;
 DP_NODE ***dp_map;
-typedef struct {
+
+typedef struct
+{
     int id;
     int val;
 } NET_NODE;
 NET_NODE *net_order;
-typedef struct {
+
+typedef struct
+{
     int id;
     int times;
     int val;
@@ -73,60 +80,83 @@ typedef struct {
     int bends;
 } AVERAGE_NODE;
 AVERAGE_NODE *average_order;
-typedef struct {
+
+typedef struct
+{
     int xy;
     int z;
     double val;
 } NET_INFO_NODE;
 NET_INFO_NODE *net_info;
-void update_ans(int tar, int val) {
+
+void update_ans(int tar, int val)
+{
     ans.idx = tar;
     ans.val = val;
 }
-typedef struct {
+
+typedef struct
+{
     Two_pin_list_2d two_pin_net_list;
 } MULTIPIN_NET_NODE;
 MULTIPIN_NET_NODE *multi_pin_net;
-typedef struct {
+
+typedef struct
+{
     int val;
     int edge[4];
     int pin_layer; // may be a problem, because there are pins in same (x, y), but not the same layer
+                   // ????????
     int min_pin_layer;
     int max_pin_layer;
 } PATH_NODE;
 PATH_NODE **path_map;
-typedef struct {
+
+typedef struct
+{
     int val;
     int via_cost;
     int via_overflow;
     int pi_z;
 } KLAT_NODE;
 KLAT_NODE ***klat_map;
-typedef struct {
+
+typedef struct
+{
     int *edge[4];
 } OVERFLOW_NODE;
 OVERFLOW_NODE **overflow_map;
-typedef struct {
+
+typedef struct
+{
     int pi;
     int sx, sy, bx, by;
     int num;
 } UNION_NODE;
 UNION_NODE *group_set;
-typedef struct {
+
+typedef struct
+{
     int xy;
     int z;
 } LENGTH_NODE;
 LENGTH_NODE length_count[1000];
-typedef struct {
+
+typedef struct
+{
     int cur;
     int max;
 } VIADENSITY_NODE;
 VIADENSITY_NODE ***viadensity_map;
-typedef struct {
+
+typedef struct
+{
     set<int> used_net;
 } PATH_EDGE_3D;
 typedef PATH_EDGE_3D *PATH_EDGE_3D_PTR;
-typedef struct {
+
+typedef struct
+{
     PATH_EDGE_3D_PTR edge_list[6];
 } PATH_VERTEX_3D;
 PATH_VERTEX_3D ***path_map_3d;
@@ -141,9 +171,12 @@ int ***BFS_color_map;
 int temp_global_pin_cost, temp_global_xy_cost, after_xy_cost;
 // int is_used_for_BFS[1300][1300]; // modified
 int global_increase_vo;
+vector<int> lost_pin_net;
 
-inline std::string viaToGuide(int x, int y, int layer1, int layer2) {
-    auto pointToGcell = [&](int x, int y, int xStep, int yStep) {
+inline std::string viaToGuide(int x, int y, int layer1, int layer2)
+{
+    auto pointToGcell = [&](int x, int y, int xStep, int yStep)
+    {
         std::vector<utils::PointT<int>> coord(2);
         coord[0].x = max(0, x * xStep - 1);
         coord[0].y = max(0, y * yStep - 1);
@@ -162,24 +195,26 @@ inline std::string viaToGuide(int x, int y, int layer1, int layer2) {
     metal" + std::to_string(l) + "\n";
     }
     */
-    for (int l = layer_1 - 1; l < layer_2 - 1; ++l) {
-        str += std::to_string(4200*x +2100) + " " + std::to_string(4200*y +2100) + " metal" + std::to_string(l+1) + " " + std::to_string(4200*x +2100) + " "
-               + std::to_string(4200*y +2100) + " metal" + std::to_string(l + 2) + "\n";
+    for (int l = layer_1 - 1; l < layer_2 - 1; ++l)
+    {
+        str += std::to_string(4200 * x + 2100) + " " + std::to_string(4200 * y + 2100) + " metal" + std::to_string(l + 1) + " " + std::to_string(4200 * x + 2100) + " " + std::to_string(4200 * y + 2100) + " metal" + std::to_string(l + 2) + "\n";
     }
     return str;
 
     auto coord1 = pointToGcell(x, y, grDatabase.getXStep(), grDatabase.getYStep());
     int xmax = std::min(int(database.dieRegion.x.high), coord1[1].x);
     int ymax = std::min(int(database.dieRegion.y.high), coord1[1].y);
-    for (int i = layer_1; i < layer_2 + 1; i++) {
-        str = str + std::to_string(coord1[0].x) + " " + std::to_string(coord1[0].y) + " " + std::to_string(coord1[1].x)
-              + " " + std::to_string(coord1[1].y) + " Metal" + std::to_string(i) + "\n";
+    for (int i = layer_1; i < layer_2 + 1; i++)
+    {
+        str = str + std::to_string(coord1[0].x) + " " + std::to_string(coord1[0].y) + " " + std::to_string(coord1[1].x) + " " + std::to_string(coord1[1].y) + " Metal" + std::to_string(i) + "\n";
     }
     return str;
 }
 
-inline std::string rectToGuide(int x1, int y1, int x2, int y2, int layer) {
-    auto pointToGcell = [&](int x, int y, int xStep, int yStep) {
+inline std::string rectToGuide(int x1, int y1, int x2, int y2, int layer)
+{
+    auto pointToGcell = [&](int x, int y, int xStep, int yStep)
+    {
         std::vector<utils::PointT<int>> coord(2);
         coord[0].x = max(0, x * xStep - 1);
         coord[0].y = max(0, y * yStep - 1);
@@ -194,8 +229,7 @@ inline std::string rectToGuide(int x1, int y1, int x2, int y2, int layer) {
     str += std::to_string(max(x1, x2) + 1) + " " + std::to_string(max(y1, y2) + 1) + " ";
     str += "metal" + std::to_string(layer) + "\n";
     */
-    str = std::to_string(4200*min(x1, x2) +2100) + " " + std::to_string(4200*min(y1, y2) +2100) + " metal" + std::to_string(layer) + " "
-          + std::to_string(4200*max(x1, x2) +2100) + " " + std::to_string(4200*max(y1, y2) +2100) + " metal" + std::to_string(layer) + "\n";
+    str = std::to_string(4200 * min(x1, x2) + 2100) + " " + std::to_string(4200 * min(y1, y2) + 2100) + " metal" + std::to_string(layer) + " " + std::to_string(4200 * max(x1, x2) + 2100) + " " + std::to_string(4200 * max(y1, y2) + 2100) + " metal" + std::to_string(layer) + "\n";
     return str;
 
     auto coord1 = pointToGcell(x1, y1, grDatabase.getXStep(), grDatabase.getYStep());
@@ -203,7 +237,8 @@ inline std::string rectToGuide(int x1, int y1, int x2, int y2, int layer) {
     int xmax = INT_MIN, xmin = INT_MAX;
     int ymax = INT_MIN, ymin = INT_MAX;
     coord1.insert(coord1.end(), coord2.begin(), coord2.end());
-    for (auto &point : coord1) {
+    for (auto &point : coord1)
+    {
         if (point.x > xmax)
             xmax = point.x;
         if (point.x < xmin)
@@ -228,8 +263,10 @@ inline std::string rectToGuide(int x1, int y1, int x2, int y2, int layer) {
     return str;
 }
 
-void print_max_overflow(void) {
-    auto sign = [](double x) {
+void print_max_overflow(void)
+{
+    auto sign = [](double x)
+    {
         const double EPS = 1e-8;
         if (abs(x) < EPS)
             return 0;
@@ -245,29 +282,31 @@ void print_max_overflow(void) {
     // int x, y;
     vector<int> sum_overflow;
 
-    for (int i = 0; i < max_zz; i++) {
+    for (int i = 0; i < max_zz; i++)
+    {
         sum_overflow.push_back(0);
     }
 
     for (i = 1; i < max_xx; ++i)
-        for (j = 0; j < max_yy; ++j) {
+        for (j = 0; j < max_yy; ++j)
+        {
             temp_sum = 0;
-            for (k = 0; k < max_zz; ++k) {
+            for (k = 0; k < max_zz; ++k)
+            {
                 temp_sum += cur_map_3d[i][j][k].edge_list[LEFT]->cur_cap;
                 // if (/*k == 0 || */database.getLayerDir(k) == X) {
                 // 	assert(cur_map_3d[i][j][k].edge_list[LEFT]->max_cap == 0);
                 // 	assert(cur_map_3d[i][j][k].edge_list[LEFT]->cur_cap == 0);
                 // }
-                if (cur_map_3d[i][j][k].edge_list[LEFT]->cur_cap
-                    > cur_map_3d[i][j][k].edge_list[LEFT]->max_cap) // overflow
+                if (cur_map_3d[i][j][k].edge_list[LEFT]->cur_cap > cur_map_3d[i][j][k].edge_list[LEFT]->max_cap) // overflow
                 {
                     // printf("%d %d %d, cur_cap: %d, max_cap: %d\n", i, j, k,
                     // cur_map_3d[i][j][k].edge_list[LEFT]->cur_cap, cur_map_3d[i][j][k].edge_list[LEFT]->max_cap);
 
                     // if((cur_map_3d[i][j][k].edge_list[LEFT]->max_cap % 2) != 0) // modified
                     // 	cur_map_3d[i][j][k].edge_list[LEFT]->max_cap -= 1; // modified
-                    if (cur_map_3d[i][j][k].edge_list[LEFT]->cur_cap - cur_map_3d[i][j][k].edge_list[LEFT]->max_cap
-                        > max) {
+                    if (cur_map_3d[i][j][k].edge_list[LEFT]->cur_cap - cur_map_3d[i][j][k].edge_list[LEFT]->max_cap > max)
+                    {
                         max =
                             cur_map_3d[i][j][k].edge_list[LEFT]->cur_cap - cur_map_3d[i][j][k].edge_list[LEFT]->max_cap;
                     }
@@ -280,19 +319,20 @@ void print_max_overflow(void) {
             }
         }
     for (i = 0; i < max_xx; ++i)
-        for (j = 1; j < max_yy; ++j) {
+        for (j = 1; j < max_yy; ++j)
+        {
             temp_sum = 0;
-            for (k = 0; k < max_zz; ++k) {
+            for (k = 0; k < max_zz; ++k)
+            {
                 temp_sum += cur_map_3d[i][j][k].edge_list[BACK]->cur_cap;
                 // if (/*k == 0 || */database.getLayerDir(k) == Y) {
                 // 	assert(cur_map_3d[i][j][k].edge_list[BACK]->max_cap == 0);
                 // 	assert(cur_map_3d[i][j][k].edge_list[BACK]->cur_cap == 0);
                 // }
-                if (cur_map_3d[i][j][k].edge_list[BACK]->cur_cap
-                    > cur_map_3d[i][j][k].edge_list[BACK]->max_cap) // overflow
+                if (cur_map_3d[i][j][k].edge_list[BACK]->cur_cap > cur_map_3d[i][j][k].edge_list[BACK]->max_cap) // overflow
                 {
-                    if (cur_map_3d[i][j][k].edge_list[BACK]->cur_cap - cur_map_3d[i][j][k].edge_list[BACK]->max_cap
-                        > max) {
+                    if (cur_map_3d[i][j][k].edge_list[BACK]->cur_cap - cur_map_3d[i][j][k].edge_list[BACK]->max_cap > max)
+                    {
                         max =
                             cur_map_3d[i][j][k].edge_list[BACK]->cur_cap - cur_map_3d[i][j][k].edge_list[BACK]->max_cap;
                     }
@@ -305,7 +345,8 @@ void print_max_overflow(void) {
             }
         }
 
-    for (int cnt_layer = 0; cnt_layer < max_zz; cnt_layer++) {
+    for (int cnt_layer = 0; cnt_layer < max_zz; cnt_layer++)
+    {
         std::cout << "layer: " << cnt_layer << "  3D # of overflow = " << sum_overflow[cnt_layer] << std::endl;
     }
     printf("3D # of overflow = %d\n", sum);
@@ -313,7 +354,8 @@ void print_max_overflow(void) {
     printf("3D overflow edge number = %d\n", lines);
 }
 
-void find_overflow_max(void) {
+void find_overflow_max(void)
+{
     int i, j;
 
     overflow_max = 0;
@@ -328,13 +370,15 @@ void find_overflow_max(void) {
     printf("2D maximum overflow = %d\n", overflow_max);
 #ifdef MAX_OVERFLOW_CONSTRAINT
 #ifdef FOLLOW_PREFER
-    if (follow_prefer_direction == 1) {
+    if (follow_prefer_direction == 1)
+    {
         if (overflow_max % (max_zz / 2))
             overflow_max = ((overflow_max / (max_zz / 2)) << 1) + 2;
         else
             overflow_max = ((overflow_max / (max_zz / 2)) << 1);
     }
-    else {
+    else
+    {
         if (overflow_max % max_zz)
             overflow_max = ((overflow_max / max_zz) << 1) + 2;
         else
@@ -356,33 +400,39 @@ void find_overflow_max(void) {
     printf("overflow max = %d\n", overflow_max);
 }
 
-void initial_3D_coordinate_map(void) {
+void initial_3D_coordinate_map(void)
+{
     int i, j, k;
 
     coord_3d_map = (Coordinate_3d ***)malloc(sizeof(Coordinate_3d **) * max_xx);
-    for (i = 0; i < max_xx; ++i) {
+    for (i = 0; i < max_xx; ++i)
+    {
         coord_3d_map[i] = (Coordinate_3d **)malloc(sizeof(Coordinate_3d *) * max_yy);
         for (j = 0; j < max_yy; ++j)
             coord_3d_map[i][j] = (Coordinate_3d *)malloc(sizeof(Coordinate_3d) * max_zz);
     }
     for (i = 0; i < max_xx; ++i)
         for (j = 0; j < max_yy; ++j)
-            for (k = 0; k < max_zz; ++k) {
+            for (k = 0; k < max_zz; ++k)
+            {
                 coord_3d_map[i][j][k].x = i;
                 coord_3d_map[i][j][k].y = j;
                 coord_3d_map[i][j][k].z = k;
             }
 }
 
-void malloc_path_map(void) {
+void malloc_path_map(void)
+{
     int i, j, k;
     path_map = (PATH_NODE **)malloc(sizeof(PATH_NODE *) * max_xx);
-    for (i = 0; i < max_xx; ++i) {
+    for (i = 0; i < max_xx; ++i)
+    {
         path_map[i] = (PATH_NODE *)malloc(sizeof(PATH_NODE) * max_yy);
     }
     // initial path_map
     for (i = 0; i < max_xx; ++i)
-        for (j = 0; j < max_yy; ++j) {
+        for (j = 0; j < max_yy; ++j)
+        {
             path_map[i][j].val = 0; // non-visited
             path_map[i][j].pin_layer = -1;
             path_map[i][j].min_pin_layer = INT_MAX;
@@ -392,18 +442,21 @@ void malloc_path_map(void) {
         }
 }
 
-void malloc_klat_map(void) {
+void malloc_klat_map(void)
+{
     int i, j;
 
     klat_map = (KLAT_NODE ***)malloc(sizeof(KLAT_NODE **) * max_xx);
-    for (i = 0; i < max_xx; ++i) {
+    for (i = 0; i < max_xx; ++i)
+    {
         klat_map[i] = (KLAT_NODE **)malloc(sizeof(KLAT_NODE *) * max_yy);
         for (j = 0; j < max_yy; ++j)
             klat_map[i][j] = (KLAT_NODE *)malloc(sizeof(KLAT_NODE) * max_zz);
     }
 }
 
-void malloc_overflow_map(void) {
+void malloc_overflow_map(void)
+{
     int i, j;
     int *temp;
 
@@ -411,29 +464,34 @@ void malloc_overflow_map(void) {
     for (i = 0; i < max_xx; ++i)
         overflow_map[i] = (OVERFLOW_NODE *)malloc(sizeof(OVERFLOW_NODE) * max_yy);
     for (i = 1; i < max_xx; ++i)
-        for (j = 0; j < max_yy; ++j) {
+        for (j = 0; j < max_yy; ++j)
+        {
             temp = (int *)malloc(sizeof(int));
             overflow_map[i][j].edge[LEFT] = temp;
             overflow_map[i - 1][j].edge[RIGHT] = temp;
         }
     for (i = 0; i < max_xx; ++i)
-        for (j = 1; j < max_yy; ++j) {
+        for (j = 1; j < max_yy; ++j)
+        {
             temp = (int *)malloc(sizeof(int));
             overflow_map[i][j].edge[BACK] = temp;
             overflow_map[i][j - 1].edge[FRONT] = temp;
         }
 }
 
-void initial_overflow_map(void) {
+void initial_overflow_map(void)
+{
     int i, j;
     int max_of_quota = INT_MIN;
     for (i = 1; i < max_xx; ++i)
-        for (j = 0; j < max_yy; ++j) {
+        for (j = 0; j < max_yy; ++j)
+        {
             *(overflow_map[i][j].edge[LEFT]) = (congestionMap2d->edge(i, j, DIR_WEST).overUsage()); // modified
             max_of_quota = max(max_of_quota, *(overflow_map[i][j].edge[LEFT]));
         }
     for (i = 0; i < max_xx; ++i)
-        for (j = 1; j < max_yy; ++j) {
+        for (j = 1; j < max_yy; ++j)
+        {
             *(overflow_map[i][j].edge[BACK]) = (congestionMap2d->edge(i, j, DIR_SOUTH).overUsage()); // modified
             // if (i == 94 && j == 112) {
             // 	printf("%d %d\n", *(overflow_map[i][j].edge[BACK]), (congestionMap2d->edge(i, j,
@@ -453,11 +511,13 @@ void initial_overflow_map(void) {
     // DIR_NORTH).cur_cap, congestionMap2d->edge(94, 111, DIR_NORTH).max_cap);
 }
 
-void malloc_viadensity_map(void) {
+void malloc_viadensity_map(void)
+{
     int i, j, k;
 
     viadensity_map = (VIADENSITY_NODE ***)malloc(sizeof(VIADENSITY_NODE **) * max_xx);
-    for (i = 0; i < max_xx; ++i) {
+    for (i = 0; i < max_xx; ++i)
+    {
         viadensity_map[i] = (VIADENSITY_NODE **)malloc(sizeof(VIADENSITY_NODE *) * max_yy);
         for (j = 0; j < max_yy; ++j)
             viadensity_map[i][j] = (VIADENSITY_NODE *)malloc(sizeof(VIADENSITY_NODE) * max_zz);
@@ -469,14 +529,16 @@ void malloc_viadensity_map(void) {
                 viadensity_map[i][j][k].cur = viadensity_map[i][j][k].max = 0;
 }
 
-void malloc_space(void) {
+void malloc_space(void)
+{
     malloc_path_map();
     malloc_klat_map();
     malloc_overflow_map();
     malloc_viadensity_map();
 }
 
-void free_path_map(void) {
+void free_path_map(void)
+{
     int i;
 
     for (i = 0; i < max_xx; ++i)
@@ -484,10 +546,12 @@ void free_path_map(void) {
     free(path_map);
 }
 
-void free_klat_map(void) {
+void free_klat_map(void)
+{
     int i, j;
 
-    for (i = 0; i < max_xx; ++i) {
+    for (i = 0; i < max_xx; ++i)
+    {
         for (j = 0; j < max_yy; ++j)
             free(klat_map[i][j]);
         free(klat_map[i]);
@@ -495,7 +559,8 @@ void free_klat_map(void) {
     free(klat_map);
 }
 
-void free_overflow_map(void) {
+void free_overflow_map(void)
+{
     int i, j;
 
     for (i = 1; i < max_xx; ++i)
@@ -509,10 +574,12 @@ void free_overflow_map(void) {
     free(overflow_map);
 }
 
-void free_viadensity_map(void) {
+void free_viadensity_map(void)
+{
     int i, j;
 
-    for (i = 0; i < max_xx; ++i) {
+    for (i = 0; i < max_xx; ++i)
+    {
         for (j = 0; j < max_yy; ++j)
             free(viadensity_map[i][j]);
         free(viadensity_map[i]);
@@ -520,25 +587,29 @@ void free_viadensity_map(void) {
     free(viadensity_map);
 }
 
-void free_malloc_space(void) {
+void free_malloc_space(void)
+{
     free_path_map();
     free_klat_map();
     free_overflow_map();
     free_viadensity_map();
 }
 
-void update_cur_map_for_klat_xy(int cur_idx, Coordinate_2d *start, Coordinate_2d *end, int net_id) {
+void update_cur_map_for_klat_xy(int cur_idx, Coordinate_2d *start, Coordinate_2d *end, int net_id)
+{
     int dir_idx;
     assert(cur_idx > 0);
-    if (start->x != end->x && start->y == end->y) {
+    if (start->x != end->x && start->y == end->y)
+    {
         // assert(database.getLayerDir(cur_idx) == Y);
         dir_idx = ((end->x > start->x) ? LEFT : RIGHT);
         // assert(cur_map_3d[end->x][end->y][cur_idx].edge_list[dir_idx]->max_cap > 0);
-        cur_map_3d[end->x][end->y][cur_idx].edge_list[dir_idx]->used_net[net_id]++;
+        // cur_map_3d[end->x][end->y][cur_idx].edge_list[dir_idx]->used_net[net_id]++;
+        cur_map_3d[end->x][end->y][cur_idx].edge_list[dir_idx]->used_net.insert(net_id);
+        // if(cur_map_3d[end->x][end->y][cur_idx].edge_list[dir_idx]->used_net[net_id] >1 ) std::cout << "net used edge over once:" << rr_map->get_net_name(net_id) << '\n';
         cur_map_3d[end->x][end->y][cur_idx].edge_list[dir_idx]->cur_cap =
-            (cur_map_3d[end->x][end->y][cur_idx].edge_list[dir_idx]->used_net.size()); // modified
-        if (cur_map_3d[end->x][end->y][cur_idx].edge_list[dir_idx]->cur_cap
-            > cur_map_3d[end->x][end->y][cur_idx].edge_list[dir_idx]->max_cap) // need check
+            (cur_map_3d[end->x][end->y][cur_idx].edge_list[dir_idx]->used_net.size());                                                         // modified
+        if (cur_map_3d[end->x][end->y][cur_idx].edge_list[dir_idx]->cur_cap > cur_map_3d[end->x][end->y][cur_idx].edge_list[dir_idx]->max_cap) // need check
         {
             // printf("%d %d %d, cur_cap: %lf, max_cap: %lf\n", end->x, end->y, cur_idx,
             // cur_map_3d[end->x][end->y][cur_idx].edge_list[dir_idx]->cur_cap,
@@ -548,7 +619,8 @@ void update_cur_map_for_klat_xy(int cur_idx, Coordinate_2d *start, Coordinate_2d
             assert(*(overflow_map[end->x][end->y].edge[dir_idx]) >= 0);
         }
     }
-    else if (start->y != end->y && start->x == end->x) {
+    else if (start->y != end->y && start->x == end->x)
+    {
         // if (database.getLayerDir(cur_idx) != X) {
         // 	cout << cur_idx << '\n';
         // 	cout << start->y << ' ' << end->y << '\n';
@@ -562,11 +634,12 @@ void update_cur_map_for_klat_xy(int cur_idx, Coordinate_2d *start, Coordinate_2d
         // 	std::cout << start->x << ' ' << start->y << ' ' << end->x << ' ' << end->y << std::endl;
         // }
         // assert(cur_map_3d[end->x][end->y][cur_idx].edge_list[dir_idx]->max_cap > 0);
-        cur_map_3d[end->x][end->y][cur_idx].edge_list[dir_idx]->used_net[net_id]++;
+        // cur_map_3d[end->x][end->y][cur_idx].edge_list[dir_idx]->used_net[net_id]++;
+        cur_map_3d[end->x][end->y][cur_idx].edge_list[dir_idx]->used_net.insert(net_id);
+        // if(cur_map_3d[end->x][end->y][cur_idx].edge_list[dir_idx]->used_net[net_id] >1 ) std::cout << "net used edge over once:" << rr_map->get_net_name(net_id) << '\n';
         cur_map_3d[end->x][end->y][cur_idx].edge_list[dir_idx]->cur_cap =
-            (cur_map_3d[end->x][end->y][cur_idx].edge_list[dir_idx]->used_net.size()); // modified
-        if (cur_map_3d[end->x][end->y][cur_idx].edge_list[dir_idx]->cur_cap
-            > cur_map_3d[end->x][end->y][cur_idx].edge_list[dir_idx]->max_cap) // need check
+            (cur_map_3d[end->x][end->y][cur_idx].edge_list[dir_idx]->used_net.size());                                                         // modified
+        if (cur_map_3d[end->x][end->y][cur_idx].edge_list[dir_idx]->cur_cap > cur_map_3d[end->x][end->y][cur_idx].edge_list[dir_idx]->max_cap) // need check
         {
             // printf("%d %d %d, cur_cap: %d, max_cap: %d\n", end->x, end->y, cur_idx,
             // cur_map_3d[end->x][end->y][cur_idx].edge_list[dir_idx]->cur_cap,
@@ -579,17 +652,21 @@ void update_cur_map_for_klat_xy(int cur_idx, Coordinate_2d *start, Coordinate_2d
             assert(*(overflow_map[end->x][end->y].edge[dir_idx]) >= 0);
         }
     }
-    else if (start->x != end->x && start->y != end->y) {
+    else if (start->x != end->x && start->y != end->y)
+    {
         printf("%d %d %d %d\n", start->x, start->y, end->x, end->y);
         puts("ERROR!!!");
     }
 }
 
-void update_cur_map_for_klat_z(int pre_idx, int cur_idx, Coordinate_2d *start, int net_id) {
+void update_cur_map_for_klat_z(int pre_idx, int cur_idx, Coordinate_2d *start, int net_id)
+{
     int i, j, k, z_dir, dir_idx;
 
-    if (pre_idx != cur_idx) {
-        if (cur_idx > pre_idx) {
+    if (pre_idx != cur_idx)
+    {
+        if (cur_idx > pre_idx)
+        {
             z_dir = 1;
             dir_idx = UP;
         }
@@ -600,8 +677,11 @@ void update_cur_map_for_klat_z(int pre_idx, int cur_idx, Coordinate_2d *start, i
         }
         i = start->x;
         j = start->y;
-        for (k = pre_idx; k != cur_idx; k += z_dir) {
-            cur_map_3d[i][j][k].edge_list[dir_idx]->used_net[net_id]++;
+        for (k = pre_idx; k != cur_idx; k += z_dir)
+        {
+            // cur_map_3d[i][j][k].edge_list[dir_idx]->used_net[net_id]++;
+            cur_map_3d[i][j][k].edge_list[dir_idx]->used_net.insert(net_id);
+            // if(cur_map_3d[i][j][k].edge_list[dir_idx]->used_net[net_id] >1 ) std::cout << "net used edge over once:" << rr_map->get_net_name(net_id) << '\n';
             if (z_dir == 1)
                 ++viadensity_map[i][j][k].cur;
             else
@@ -610,7 +690,8 @@ void update_cur_map_for_klat_z(int pre_idx, int cur_idx, Coordinate_2d *start, i
     }
 }
 
-void update_path_for_klat(Coordinate_2d *start, int start_pin_layer) {
+void update_path_for_klat(Coordinate_2d *start, int start_pin_layer)
+{
     int i, x, y, z_min, z_max, pin_num = 0;
     queue<Coordinate_3d *> q;
     Coordinate_3d *temp;
@@ -626,25 +707,30 @@ void update_path_for_klat(Coordinate_2d *start, int start_pin_layer) {
     q.push(&coord_3d_map[start->x][start->y][0]); // enqueue
 #endif
 
-    while (!q.empty()) {
+    while (!q.empty())
+    {
         temp = (Coordinate_3d *)q.front();
         // std::cout << temp->x << ' ' << temp->y << ' ' << temp->z << '\n';
         // if (global_net_id == 349)
         // 	std::cout << temp->x << ' ' << temp->y << ' ' << temp->z << std::endl;
         if (path_map[temp->x][temp->y].val == 2) // has >= 1 pin
         {
-            // pin_num++;
+            pin_num++;
 #ifdef PIN_LEF
-            if (is_metal5) {
+            if (is_metal5)
+            {
                 z_min = min(temp->z, path_map[temp->x][temp->y].min_pin_layer); // modified
                 z_max = max(temp->z, path_map[temp->x][temp->y].max_pin_layer); // modified
             }
-            else {
-                if (temp->z > path_map[temp->x][temp->y].pin_layer) {
+            else
+            {
+                if (temp->z > path_map[temp->x][temp->y].pin_layer)
+                {
                     z_min = path_map[temp->x][temp->y].pin_layer;
                     z_max = temp->z;
                 }
-                else {
+                else
+                {
                     z_min = temp->z;
                     z_max = path_map[temp->x][temp->y].pin_layer;
                 }
@@ -655,7 +741,8 @@ void update_path_for_klat(Coordinate_2d *start, int start_pin_layer) {
             z_max = temp->z;
 #endif
         }
-        else {
+        else
+        {
             z_min = temp->z;
             z_max = temp->z;
         }
@@ -688,26 +775,39 @@ void update_path_for_klat(Coordinate_2d *start, int start_pin_layer) {
         path_map[temp->x][temp->y].max_pin_layer = INT_MIN; // visited
         q.pop();                                            // dequeue
     }
+    if (pin_num != global_pin_num)
+    {
+        lost_pin_net.push_back(global_net_id);
+    }
+
     // assert(pin_num == global_pin_num);
     // if (pin_num != global_pin_num)
     // 	printf("net : %d, pin number error %d vs %d\n", global_net_id, pin_num, global_pin_num);
 }
 
-void cycle_reduction(int x, int y) {
+// check point if it is leaf node
+// leaf node only has one edge which does not contain pin
+void cycle_reduction(int x, int y)
+{ // check point if it is leaf node
     int i, idx, temp_x, temp_y;
 
     for (i = 0; i < 4; ++i)
         if (path_map[x][y].edge[i] == 1)
             cycle_reduction(x + plane_dir[i][0], y + plane_dir[i][1]);
+
+    // point does not have connnection point
     for (idx = 0; idx < 4 && path_map[x][y].edge[idx] == 0; ++idx)
         ;
+
     if (idx == 4 && path_map[x][y].val == 1) // a leaf && it is not a pin
     {
         path_map[x][y].val = 0;
-        for (i = 0; i < 4; ++i) {
+        for (i = 0; i < 4; ++i)
+        {
             temp_x = x + plane_dir[i][0];
             temp_y = y + plane_dir[i][1];
-            if (temp_x >= 0 && temp_x < max_xx && temp_y >= 0 && temp_y < max_yy) {
+            if (temp_x >= 0 && temp_x < max_xx && temp_y >= 0 && temp_y < max_yy)
+            {
                 if (i == 0 && path_map[temp_x][temp_y].edge[1] == 1)
                     path_map[temp_x][temp_y].edge[1] = 0;
                 else if (i == 1 && path_map[temp_x][temp_y].edge[0] == 1)
@@ -721,7 +821,8 @@ void cycle_reduction(int x, int y) {
     }
 }
 
-int preprocess(int net_id) {
+int preprocess(int net_id)
+{
     int i, k, x, y;
     int pin_layer;
     queue<Coordinate_2d *> q;
@@ -731,13 +832,15 @@ int preprocess(int net_id) {
     int xy_len = 0;
 #endif
     after_xy_cost = 0;
-    for (i = 0; i < global_pin_num; ++i) {
+    for (i = 0; i < global_pin_num; ++i)
+    {
         x = (*pin_list)[i]->get_tileX();
         y = (*pin_list)[i]->get_tileY();
         pin_layer = (*pin_list)[i]->get_layerId();
         path_map[x][y].val = -2; // pin
         path_map[x][y].pin_layer = pin_layer;
-        if (i == 0) {
+        if (i == 0)
+        {
             assert(path_map[x][y].min_pin_layer == INT_MAX);
             assert(path_map[x][y].max_pin_layer == INT_MIN);
         }
@@ -751,7 +854,8 @@ int preprocess(int net_id) {
     path_map[x][y].val = 2; // visited
 
     // initial klat_map[x][y][k]
-    for (k = 0; k < max_zz; ++k) {
+    for (k = 0; k < max_zz; ++k)
+    {
 #ifdef DAC2023
         klat_map[x][y][k].val = INT_MAX;
 #else
@@ -760,21 +864,24 @@ int preprocess(int net_id) {
         klat_map[x][y][k].pi_z = -1;
     }
     q.push(&coor_array[x][y]); // enqueue
-    while (!q.empty()) {
+    while (!q.empty())
+    {
         temp = q.front();
-        for (i = 0; i < 4; ++i) {
+        for (i = 0; i < 4; ++i)
+        {
             x = temp->x + plane_dir[i][0];
             y = temp->y + plane_dir[i][1];
 
-            if (x >= 0 && x < max_xx && y >= 0 && y < max_yy
-                && congestionMap2d->edge(temp->x, temp->y, i).lookupNet(net_id)) {
-                if (path_map[x][y].val == 0 || path_map[x][y].val == -2) {
+            if (x >= 0 && x < max_xx && y >= 0 && y < max_yy && congestionMap2d->edge(temp->x, temp->y, i).lookupNet(net_id))
+            {
+                if (path_map[x][y].val == 0 || path_map[x][y].val == -2)
+                { // unvisited pin or node
                     ++after_xy_cost;
 #ifdef POSTPROCESS
                     ++xy_len;
 #endif
                     global_BFS_xy++;
-                    path_map[temp->x][temp->y].edge[i] = 1;
+                    path_map[temp->x][temp->y].edge[i] = 1; // path direction?
                     if (path_map[x][y].val == 0)
                         path_map[x][y].val = 1; // visited node
                     else                        // path_map[x][y].val == 2
@@ -782,7 +889,8 @@ int preprocess(int net_id) {
                         path_map[x][y].val = 2; // visited pin
                     }
                     // initial klat_map[x][y][k]
-                    for (k = 0; k < max_zz; ++k) {
+                    for (k = 0; k < max_zz; ++k)
+                    {
 #ifdef DAC2023
                         klat_map[x][y][k].val = INT_MAX;
 #else
@@ -809,10 +917,10 @@ int preprocess(int net_id) {
                     q.push(&coor_array[x][y]); // enqueue
                 }
                 else
-                    path_map[temp->x][temp->y].edge[i] = 0;
+                    path_map[temp->x][temp->y].edge[i] = 0; // can not pass
             }
             else
-                path_map[temp->x][temp->y].edge[i] = 0;
+                path_map[temp->x][temp->y].edge[i] = 0; // can not pass
         }
         q.pop(); // dequeue
     }
@@ -827,51 +935,62 @@ int preprocess(int net_id) {
 #endif
 }
 
-void PRINT_DP_INF(int level, int val, int *count_idx) {
+void PRINT_DP_INF(int level, int val, int *count_idx)
+{
     int k, temp_x, temp_y, temp_val, temp_via_cost;
     int temp_idx[4];
     int min_k, max_k, temp_min_k, temp_max_k;
 
-    if (level < 4) {
+    if (level < 4)
+    {
         for (k = 0; k < level; ++k)
             temp_idx[k] = count_idx[k];
-        if (path_map[global_x][global_y].edge[level] == 1) {
+        if (path_map[global_x][global_y].edge[level] == 1)
+        {
             temp_x = global_x + plane_dir[level][0];
             temp_y = global_y + plane_dir[level][1];
             for (k = 0; k < global_max_layer; ++k) // use global_max_layer to substitue max_zz
-                if (klat_map[temp_x][temp_y][k].val >= 0) {
+                if (klat_map[temp_x][temp_y][k].val >= 0)
+                {
                     std::cout << "x = " << temp_x << " y = " << temp_y << " k = " << k
                               << " val = " << klat_map[temp_x][temp_y][k].val << std::endl;
                     temp_idx[level] = k;
                     PRINT_DP_INF(level + 1, val + klat_map[temp_x][temp_y][k].val, temp_idx);
                 }
         }
-        else {
+        else
+        {
             temp_idx[level] = -1;
             PRINT_DP_INF(level + 1, val, temp_idx);
         }
     }
 }
 
-void rec_count(int level, int val, int *count_idx) {
+void rec_count(int level, int val, int *count_idx)
+{
     int k, temp_x, temp_y, temp_val, temp_via_cost;
     int temp_idx[4];
     int min_k, max_k, temp_min_k, temp_max_k;
 
-    if (level < 4) {
-        if (val <= min_DP_val) {
+    if (level < 4)
+    {
+        if (val <= min_DP_val)
+        {
             for (k = 0; k < level; ++k)
                 temp_idx[k] = count_idx[k];
-            if (path_map[global_x][global_y].edge[level] == 1) {
+            if (path_map[global_x][global_y].edge[level] == 1)
+            {
                 temp_x = global_x + plane_dir[level][0];
                 temp_y = global_y + plane_dir[level][1];
                 for (k = 1; k < global_max_layer; ++k) // use global_max_layer to substitue max_zz
-                    if (klat_map[temp_x][temp_y][k].val >= 0) {
+                    if (klat_map[temp_x][temp_y][k].val >= 0)
+                    {
                         temp_idx[level] = k;
                         rec_count(level + 1, val + klat_map[temp_x][temp_y][k].val, temp_idx);
                     }
             }
-            else {
+            else
+            {
                 temp_idx[level] = -1;
                 rec_count(level + 1, val, temp_idx);
             }
@@ -882,7 +1001,8 @@ void rec_count(int level, int val, int *count_idx) {
         min_k = min_DP_k;
         max_k = max_DP_k;
         for (k = temp_via_cost = 0; k < 4; ++k)
-            if (count_idx[k] != -1) {
+            if (count_idx[k] != -1)
+            {
                 if (count_idx[k] < min_k)
                     min_k = count_idx[k];
                 if (count_idx[k] > max_k)
@@ -901,24 +1021,29 @@ void rec_count(int level, int val, int *count_idx) {
         temp_val = temp_via_cost;
 #endif
         assert(temp_val >= 0);
-        if (temp_val < min_DP_val) {
+        if (temp_val < min_DP_val)
+        {
             min_DP_val = temp_val;
             min_DP_via_cost = temp_via_cost;
             for (k = 0; k < 4; ++k)
                 min_DP_idx[k] = count_idx[k];
         }
-        else if (temp_val == min_DP_val) {
+        else if (temp_val == min_DP_val)
+        {
 #ifdef VIA_DENSITY
-            if (temp_via_cost < min_DP_via_cost) {
+            if (temp_via_cost < min_DP_via_cost)
+            {
                 min_DP_via_cost = temp_via_cost;
                 for (k = 0; k < 4; ++k)
                     min_DP_idx[k] = count_idx[k];
             }
-            else if (temp_via_cost == min_DP_via_cost) {
+            else if (temp_via_cost == min_DP_via_cost)
+            {
                 temp_min_k = min_DP_k;
                 temp_max_k = max_DP_k;
                 for (k = 0; k < 4; ++k)
-                    if (min_DP_idx[k] != -1) {
+                    if (min_DP_idx[k] != -1)
+                    {
                         if (min_DP_idx[k] < temp_min_k)
                             temp_min_k = min_DP_idx[k];
                         if (min_DP_idx[k] > temp_max_k)
@@ -932,7 +1057,8 @@ void rec_count(int level, int val, int *count_idx) {
             temp_min_k = min_DP_k;
             temp_max_k = max_DP_k;
             for (k = 0; k < 4; ++k)
-                if (min_DP_idx[k] != -1) {
+                if (min_DP_idx[k] != -1)
+                {
                     if (min_DP_idx[k] < temp_min_k)
                         temp_min_k = min_DP_idx[k];
                     if (min_DP_idx[k] > temp_max_k)
@@ -946,65 +1072,81 @@ void rec_count(int level, int val, int *count_idx) {
     }
 }
 
-void update(int x, int y) {
+void update(int x, int y)
+{
     bool is_end = true;
-    for (int i = 0; i < 4; ++i) {
-        if (path_map[x][y].edge[i] == 1) {
+    for (int i = 0; i < 4; ++i)
+    {
+        if (path_map[x][y].edge[i] == 1)
+        {
             is_end = false;
             int temp_x = x + plane_dir[i][0];
             int temp_y = y + plane_dir[i][1];
             update(temp_x, temp_y);
         }
     }
-    if (is_end) {
+    if (is_end)
+    {
         assert(path_map[x][y].val == 2);
-        for (int k = 1; k < global_max_layer; ++k) {
+        for (int k = 1; k < global_max_layer; ++k)
+        {
             int num_via = max(path_map[x][y].max_pin_layer, k) - min(path_map[x][y].min_pin_layer, k);
             assert(path_map[x][y].max_pin_layer >= path_map[x][y].min_pin_layer);
             assert(num_via >= 0);
             klat_map[x][y][k].val = num_via;
         }
     }
-    else {
+    else
+    {
         int min_stream_cost[4];
         int min_stream_layer[4];
-        for (int k_min = 0; k_min < global_max_layer; ++k_min) {
-            for (int i = 0; i < 4; ++i) {
+        for (int k_min = 0; k_min < global_max_layer; ++k_min)
+        {
+            for (int i = 0; i < 4; ++i)
+            {
                 min_stream_cost[i] = INT_MAX;
                 min_stream_layer[i] = -1;
             }
-            for (int k_max = max(1, k_min); k_max < global_max_layer; ++k_max) {
-                for (int i = 0; i < 4; ++i) {
-                    if (path_map[x][y].edge[i] == 1) {
+            for (int k_max = max(1, k_min); k_max < global_max_layer; ++k_max)
+            {
+                for (int i = 0; i < 4; ++i)
+                {
+                    if (path_map[x][y].edge[i] == 1)
+                    {
                         int temp_x = x + plane_dir[i][0];
                         int temp_y = y + plane_dir[i][1];
                         int stream_cost;
-                        if (*(overflow_map[x][y].edge[i]) <= 0) {
-                            if (cur_map_3d[x][y][k_max].edge_list[i]->cur_cap
-                                < cur_map_3d[x][y][k_max].edge_list[i]->max_cap) {
+                        if (*(overflow_map[x][y].edge[i]) <= 0)
+                        {
+                            if (cur_map_3d[x][y][k_max].edge_list[i]->cur_cap < cur_map_3d[x][y][k_max].edge_list[i]->max_cap)
+                            {
                                 stream_cost = klat_map[temp_x][temp_y][k_max].val;
-                                if (stream_cost < min_stream_cost[i]) {
+                                if (stream_cost < min_stream_cost[i])
+                                {
                                     min_stream_cost[i] = stream_cost;
                                     min_stream_layer[i] = k_max;
                                     assert(min_stream_layer[i] > 0);
                                 }
                             }
                         }
-                        else {
-                            if ((cur_map_3d[x][y][k_max].edge_list[i]->cur_cap
-                                 - cur_map_3d[x][y][k_max].edge_list[i]->max_cap)
-                                < overflow_max) {
+                        else
+                        {
+                            if ((cur_map_3d[x][y][k_max].edge_list[i]->cur_cap - cur_map_3d[x][y][k_max].edge_list[i]->max_cap) < overflow_max)
+                            {
                                 bool ok = false;
-                                if ((i == 0 || i == 1) && database.getLayerDir(k_max) == X) {
+                                if ((i == 0 || i == 1) && database.getLayerDir(k_max) == X)
+                                {
                                     ok = true;
                                 }
-                                else if ((i == 2 || i == 3) && database.getLayerDir(k_max) == Y) {
+                                else if ((i == 2 || i == 3) && database.getLayerDir(k_max) == Y)
+                                {
                                     ok = true;
                                 }
                                 if (!ok)
                                     continue;
                                 stream_cost = klat_map[temp_x][temp_y][k_max].val;
-                                if (stream_cost < min_stream_cost[i]) {
+                                if (stream_cost < min_stream_cost[i])
+                                {
                                     min_stream_cost[i] = stream_cost;
                                     min_stream_layer[i] = k_max;
                                     assert(min_stream_layer[i] > 0);
@@ -1015,11 +1157,13 @@ void update(int x, int y) {
                 }
                 int min_DP_k, max_DP_k;
                 bool has_pin = (path_map[x][y].val == 2);
-                if (has_pin) {
+                if (has_pin)
+                {
                     min_DP_k = min(path_map[x][y].min_pin_layer, k_min);
                     max_DP_k = max(path_map[x][y].max_pin_layer, k_max);
                 }
-                else {
+                else
+                {
                     max_DP_k = k_max;
                     min_DP_k = k_min;
                 }
@@ -1027,14 +1171,18 @@ void update(int x, int y) {
                 int min_k = min_DP_k;
                 int max_k = max_DP_k;
                 int cost = 0;
-                for (int i = 0; i < 4; ++i) {
-                    if (path_map[x][y].edge[i] == 1) {
-                        if (min_stream_cost[i] < INT_MAX) {
+                for (int i = 0; i < 4; ++i)
+                {
+                    if (path_map[x][y].edge[i] == 1)
+                    {
+                        if (min_stream_cost[i] < INT_MAX)
+                        {
                             cost += min_stream_cost[i];
                             min_k = min(min_k, min_stream_layer[i]);
                             max_k = max(max_k, min_stream_layer[i]);
                         }
-                        else {
+                        else
+                        {
                             legal = false;
                             break;
                         }
@@ -1043,10 +1191,13 @@ void update(int x, int y) {
                 if (!legal)
                     continue;
                 cost += ((max_k - min_k) * via_cost);
-                if (cost < klat_map[x][y][k_max].val) {
+                if (cost < klat_map[x][y][k_max].val)
+                {
                     klat_map[x][y][k_max].val = cost;
-                    for (int i = 0; i < 4; ++i) {
-                        if (path_map[x][y].edge[i] == 1) {
+                    for (int i = 0; i < 4; ++i)
+                    {
+                        if (path_map[x][y].edge[i] == 1)
+                        {
                             int temp_x = x + plane_dir[i][0];
                             int temp_y = y + plane_dir[i][1];
                             klat_map[temp_x][temp_y][k_max].pi_z = min_stream_layer[i];
@@ -1055,19 +1206,25 @@ void update(int x, int y) {
                         }
                     }
                 }
-                else if (cost == klat_map[x][y][k_max].val) {
+                else if (cost == klat_map[x][y][k_max].val)
+                {
                     int temp_min_k = min_DP_k, temp_max_k = max_DP_k;
-                    for (int i = 0; i < 4; ++i) {
-                        if (path_map[x][y].edge[i] == 1) {
+                    for (int i = 0; i < 4; ++i)
+                    {
+                        if (path_map[x][y].edge[i] == 1)
+                        {
                             int temp_x = x + plane_dir[i][0];
                             int temp_y = y + plane_dir[i][1];
                             temp_min_k = min(temp_min_k, klat_map[temp_x][temp_y][k_max].pi_z);
                             temp_max_k = max(temp_max_k, klat_map[temp_x][temp_y][k_max].pi_z);
                         }
                     }
-                    if (max_k > temp_max_k || min_k > temp_min_k) {
-                        for (int i = 0; i < 4; ++i) {
-                            if (path_map[x][y].edge[i] == 1) {
+                    if (max_k > temp_max_k || min_k > temp_min_k)
+                    {
+                        for (int i = 0; i < 4; ++i)
+                        {
+                            if (path_map[x][y].edge[i] == 1)
+                            {
                                 int temp_x = x + plane_dir[i][0];
                                 int temp_y = y + plane_dir[i][1];
                                 klat_map[temp_x][temp_y][k_max].pi_z = min_stream_layer[i];
@@ -1078,11 +1235,15 @@ void update(int x, int y) {
                     }
                 }
             }
-            for (int k = global_max_layer - 2; k >= k_min; --k) {
-                if (klat_map[x][y][k + 1].val <= klat_map[x][y][k].val) {
+            for (int k = global_max_layer - 2; k >= k_min; --k)
+            {
+                if (klat_map[x][y][k + 1].val <= klat_map[x][y][k].val)
+                {
                     klat_map[x][y][k].val = klat_map[x][y][k + 1].val;
-                    for (int i = 0; i < 4; ++i) {
-                        if (path_map[x][y].edge[i] == 1) {
+                    for (int i = 0; i < 4; ++i)
+                    {
+                        if (path_map[x][y].edge[i] == 1)
+                        {
                             int temp_x = x + plane_dir[i][0];
                             int temp_y = y + plane_dir[i][1];
                             klat_map[temp_x][temp_y][k].pi_z = klat_map[temp_x][temp_y][k + 1].pi_z;
@@ -1118,7 +1279,8 @@ void update(int x, int y) {
     }
 }
 
-void DP(int x, int y, int z) {
+void DP(int x, int y, int z)
+{
     int i, k, temp_x, temp_y;
     bool is_end;
     int count_idx[4];
@@ -1131,7 +1293,8 @@ void DP(int x, int y, int z) {
             if (path_map[x][y].edge[i] == 1) // check legal
             {
 #ifdef PRINT_DP_PIN
-                if (check_net) {
+                if (check_net)
+                {
                     std::cout << "***********" << std::endl;
                     std::cout << "2d : x = " << x << " y = " << y << " i = " << i << std::endl;
                     std::cout << "***********" << std::endl;
@@ -1142,10 +1305,13 @@ void DP(int x, int y, int z) {
                 temp_y = y + plane_dir[i][1];
 
                 bool assigned = false;
-                if (*(overflow_map[x][y].edge[i]) <= 0) {  // this edge could not happen overflow
+                if (*(overflow_map[x][y].edge[i]) <= 0)
+                {                                          // this edge could not happen overflow
                     for (k = 1; k < global_max_layer; ++k) // use global_max_layer to substitute max_zz
                     {
-                        if (cur_map_3d[x][y][k].edge_list[i]->cur_cap < cur_map_3d[x][y][k].edge_list[i]->max_cap) {
+                        // pass without overflow
+                        if (cur_map_3d[x][y][k].edge_list[i]->cur_cap < cur_map_3d[x][y][k].edge_list[i]->max_cap)
+                        {
                             assigned = true;
                             // if (i == 0 || i == 1) {
                             // 	// std::cout << cur_map_3d[x][y][k].edge_list[i]->cur_cap << ' ' <<
@@ -1158,25 +1324,27 @@ void DP(int x, int y, int z) {
                         } // pass without overflow // modified
                     }
                 }
-                else {                                     // this edge could happen overflow
+                else
+                {                                          // this edge could happen overflow
                     for (k = 1; k < global_max_layer; ++k) // use global_max_layer to substitute max_zz
                     {
-                        if ((cur_map_3d[x][y][k].edge_list[i]->cur_cap - cur_map_3d[x][y][k].edge_list[i]->max_cap)
-                            < overflow_max) { // overflow, but doesn't over the overflow_max
+                        if ((cur_map_3d[x][y][k].edge_list[i]->cur_cap - cur_map_3d[x][y][k].edge_list[i]->max_cap) < overflow_max)
+                        { // overflow, but doesn't over the overflow_max
 #ifdef FOLLOW_PREFER
                             if (/*follow_prefer_direction == 0 || (follow_prefer_direction == 1 && */ (
-                                ((i == 0 || i == 1) && prefer_direction[k][1] == 1)
-                                || ((i == 2 || i == 3) && prefer_direction[k][0] == 1))) //)
+                                ((i == 0 || i == 1) && prefer_direction[k][1] == 1) || ((i == 2 || i == 3) && prefer_direction[k][0] == 1))) //)
                                 DP(temp_x, temp_y, k);
 #else
                             // std::cout << "Try to assign to edge " << i << " of grid (" << x << ", " << y << ", " << k
                             // << ")"; std::cout << "cur_cap: " << cur_map_3d[x][y][k].edge_list[i]->cur_cap << ",
                             // max_cap: " << cur_map_3d[x][y][k].edge_list[i]->max_cap << std::endl;
-                            if ((i == 0 || i == 1) && /*k % 2 == 1*/ layerDirections[k] == 1) {
+                            if ((i == 0 || i == 1) && /*k % 2 == 1*/ layerDirections[k] == 1)
+                            {
                                 DP(temp_x, temp_y, k);
                                 assigned = true;
                             }
-                            else if ((i == 2 || i == 3) && /*k % 2 == 0*/ layerDirections[k] == 0) {
+                            else if ((i == 2 || i == 3) && /*k % 2 == 0*/ layerDirections[k] == 0)
+                            {
                                 DP(temp_x, temp_y, k);
                                 assigned = true;
                             }
@@ -1185,12 +1353,14 @@ void DP(int x, int y, int z) {
 #endif
                         }
                     }
-                    if (!assigned) {
+                    if (!assigned)
+                    {
                         std::cout << "Edge " << i << " of (" << x << ", " << y;
                         std::cout << "), overflow_map val = " << *(overflow_map[x][y].edge[i]) << std::endl;
                         std::cout << "2-D demand: " << congestionMap2d->edge(x, y, i).cur_cap << std::endl;
                         std::cout << "2-D max_cap: " << congestionMap2d->edge(x, y, i).max_cap << std::endl;
-                        for (int k = 0; k < global_max_layer; ++k) {
+                        for (int k = 0; k < global_max_layer; ++k)
+                        {
                             std::cout << "Layer " << k;
                             std::cout << ", cur_cap = " << cur_map_3d[x][y][k].edge_list[i]->cur_cap;
                             std::cout << ", max_cap = " << cur_map_3d[x][y][k].edge_list[i]->max_cap;
@@ -1215,26 +1385,34 @@ void DP(int x, int y, int z) {
                 }
             }
 #ifdef PIN_LEF // !!TODO
-            if (is_end == true) {
-                if (is_metal5) {
-                    if (z <= path_map[x][y].min_pin_layer) {
+            if (is_end == true)
+            {
+                if (is_metal5)
+                {
+                    if (z <= path_map[x][y].min_pin_layer)
+                    {
                         klat_map[x][y][z].via_cost = path_map[x][y].max_pin_layer - z;
-                        for (k = z, klat_map[x][y][z].via_overflow = 0; k < path_map[x][y].max_pin_layer; ++k) {
+                        for (k = z, klat_map[x][y][z].via_overflow = 0; k < path_map[x][y].max_pin_layer; ++k)
+                        {
                             if (viadensity_map[x][y][k].cur >= viadensity_map[x][y][k].max)
                                 ++klat_map[x][y][z].via_overflow;
                         }
                     }
-                    else if (z >= path_map[x][y].max_pin_layer) {
+                    else if (z >= path_map[x][y].max_pin_layer)
+                    {
                         klat_map[x][y][z].via_cost = z - path_map[x][y].min_pin_layer;
-                        for (k = path_map[x][y].min_pin_layer, klat_map[x][y][z].via_overflow = 0; k < z; ++k) {
+                        for (k = path_map[x][y].min_pin_layer, klat_map[x][y][z].via_overflow = 0; k < z; ++k)
+                        {
                             if (viadensity_map[x][y][k].cur >= viadensity_map[x][y][k].max)
                                 ++klat_map[x][y][z].via_overflow;
                         }
                     }
-                    else {
+                    else
+                    {
                         klat_map[x][y][z].via_cost = path_map[x][y].max_pin_layer - path_map[x][y].min_pin_layer;
                         for (k = path_map[x][y].min_pin_layer, klat_map[x][y][z].via_overflow = 0;
-                             k < path_map[x][y].max_pin_layer; ++k) {
+                             k < path_map[x][y].max_pin_layer; ++k)
+                        {
                             if (viadensity_map[x][y][k].cur >= viadensity_map[x][y][k].max)
                                 ++klat_map[x][y][z].via_overflow;
                         }
@@ -1245,10 +1423,12 @@ void DP(int x, int y, int z) {
                     klat_map[x][y][z].val = klat_map[x][y][z].via_cost;
 #endif
                 }
-                else {
+                else
+                {
                     end_pin_layer = path_map[x][y].pin_layer;
                     // klat_map[x][y][z].via_cost = via_cost * z;
-                    if (z > end_pin_layer) {
+                    if (z > end_pin_layer)
+                    {
                         klat_map[x][y][z].via_cost = z - end_pin_layer;
 
 #ifdef VIA_DENSITY
@@ -1261,7 +1441,8 @@ void DP(int x, int y, int z) {
                         klat_map[x][y][z].val = klat_map[x][y][z].via_cost;
 #endif
                     }
-                    else { // # end_pin_layer >= z
+                    else
+                    { // # end_pin_layer >= z
                         klat_map[x][y][z].via_cost = end_pin_layer - z;
 #ifdef VIA_DENSITY
                         for (k = z, klat_map[x][y][z].via_overflow = 0; k < end_pin_layer; ++k)
@@ -1276,7 +1457,8 @@ void DP(int x, int y, int z) {
                 }
             }
 #else
-        if (is_end == true) {
+        if (is_end == true)
+        {
             klat_map[x][y][z].via_cost = via_cost * z;
 #ifdef VIA_DENSITY
             for (k = klat_map[x][y][z].via_overflow = 0; k < z; ++k)
@@ -1298,20 +1480,24 @@ void DP(int x, int y, int z) {
                 max_DP_k = z;
                 if (path_map[x][y].val == 1) // not a pin
                     min_DP_k = z;
-                else { // pin
+                else
+                { // pin
 #ifdef PIN_LEF
-                    if (is_metal5) {
+                    if (is_metal5)
+                    {
                         min_DP_k = min(z, path_map[x][y].min_pin_layer);
                         max_DP_k = max(z, path_map[x][y].max_pin_layer);
                     }
-                    else {
+                    else
+                    {
                         min_DP_k = path_map[x][y].pin_layer; // !!TODO
                     }
 #else
                 min_DP_k = 0;
 #endif
                 }
-                if (!is_metal5) {
+                if (!is_metal5)
+                {
                     min_DP_k = min(min_DP_k, max_DP_k);
                     max_DP_k = max(min_DP_k, max_DP_k);
                 }
@@ -1319,7 +1505,8 @@ void DP(int x, int y, int z) {
                 for (i = 0; i < 4; ++i)
                     min_DP_idx[i] = -1;
 #ifdef PRINT_DP_PIN
-                if (check_net) {
+                if (check_net)
+                {
                     std::cout << "=====DP_vertex=====" << std::endl;
                     std::cout << "global.x = " << global_x << " global.y = " << global_y << " global.z = " << min_DP_k
                               << std::endl;
@@ -1338,14 +1525,16 @@ void DP(int x, int y, int z) {
                 assert(klat_map[x][y][z].val < 1e9);
 
 #ifdef PRINT_DP_PIN
-                if (check_net) {
+                if (check_net)
+                {
                     std::cout << "---END OF CHILD---" << std::endl;
                 }
                 int temp_child_cost = 0;
                 int mink = min_DP_k;
                 int maxk = max_DP_k;
                 for (i = 0; i < 4; ++i) // direction
-                    if (min_DP_idx[i] >= 0) {
+                    if (min_DP_idx[i] >= 0)
+                    {
                         if (min_DP_idx[i] < mink)
                             mink = min_DP_idx[i];
                         if (min_DP_idx[i] > maxk)
@@ -1353,7 +1542,8 @@ void DP(int x, int y, int z) {
 
                         temp_x = x + plane_dir[i][0];
                         temp_y = y + plane_dir[i][1];
-                        if (check_net) {
+                        if (check_net)
+                        {
                             std::cout << "x = " << temp_x << " y = " << temp_y << " k = " << min_DP_idx[i]
                                       << " via_cost = " << klat_map[temp_x][temp_y][min_DP_idx[i]].via_cost
                                       << std::endl;
@@ -1362,7 +1552,8 @@ void DP(int x, int y, int z) {
                         klat_map[temp_x][temp_y][z].pi_z = min_DP_idx[i];
                         assert(klat_map[temp_x][temp_y][z].pi_z >= 0);
                     }
-                if (check_net) {
+                if (check_net)
+                {
                     std::cout << "Child_cost = " << temp_child_cost << std::endl;
                     std::cout << "Vertex_cost = " << (maxk - mink) * via_cost << std::endl;
                     std::cout << "Final_cost = " << min_DP_via_cost << std::endl;
@@ -1371,7 +1562,8 @@ void DP(int x, int y, int z) {
                 }
 #else
             for (i = 0; i < 4; ++i) // direction
-                if (min_DP_idx[i] > 0) {
+                if (min_DP_idx[i] > 0)
+                {
                     temp_x = x + plane_dir[i][0];
                     temp_y = y + plane_dir[i][1];
                     klat_map[temp_x][temp_y][z].pi_z = min_DP_idx[i];
@@ -1381,14 +1573,16 @@ void DP(int x, int y, int z) {
         }
     }
 
-    bool in_cube_and_have_edge(int x, int y, int z, int dir, int net_id) {
+    bool in_cube_and_have_edge(int x, int y, int z, int dir, int net_id)
+    {
         // F B L R U D
         int anti_dir[6] = {1, 0, 3, 2, 5, 4};
         // B F R L D U
 
-        if (x >= 0 && x < max_xx && y >= 0 && y < max_yy && z >= 0 && z < max_zz) {
-            if (cur_map_3d[x][y][z].edge_list[anti_dir[dir]]->used_net.find(net_id)
-                != cur_map_3d[x][y][z].edge_list[anti_dir[dir]]->used_net.end()) {
+        if (x >= 0 && x < max_xx && y >= 0 && y < max_yy && z >= 0 && z < max_zz)
+        {
+            if (cur_map_3d[x][y][z].edge_list[anti_dir[dir]]->used_net.find(net_id) != cur_map_3d[x][y][z].edge_list[anti_dir[dir]]->used_net.end())
+            {
                 return true;
             }
             else
@@ -1398,12 +1592,14 @@ void DP(int x, int y, int z) {
             return false;
     }
 
-    bool have_child(int pre_x, int pre_y, int pre_z, int pre_dir, int net_id) {
+    bool have_child(int pre_x, int pre_y, int pre_z, int pre_dir, int net_id)
+    {
         int dir, x, y, z;
         int anti_dir[6] = {1, 0, 3, 2, 5, 4};
 
         for (dir = 0; dir < 6; ++dir)
-            if (dir != pre_dir && dir != anti_dir[pre_dir]) {
+            if (dir != pre_dir && dir != anti_dir[pre_dir])
+            {
                 x = pre_x + cube_dir[dir][0];
                 y = pre_y + cube_dir[dir][1];
                 z = pre_z + cube_dir[dir][2];
@@ -1413,7 +1609,8 @@ void DP(int x, int y, int z) {
         return false;
     }
 
-    void generate_output(int net_id, std::ofstream &fout) {
+    void generate_output(int net_id, std::ofstream &fout)
+    {
         int i, j;
         const PinptrList *pin_list = &rr_map->get_nPin(net_id);
         const char *p;
@@ -1495,23 +1692,27 @@ void DP(int x, int y, int z) {
         else if (TESTCASE_NAME == "ispd18_test8_metal5" || TESTCASE_NAME == "ispd19_test8_metal5")
             PIN_THRESH = 4.5;
 
-        auto needPatch = [&](int x, int y, int z) {
+        auto needPatch = [&](int x, int y, int z)
+        {
             if (z == 0)
                 return false;
             return cur_map_3d[x][y][z].cap < PIN_THRESH;
         };
-        auto printSrround = [&](int x, int y, int layer_idx, int patch) {
+        auto printSrround = [&](int x, int y, int layer_idx, int patch)
+        {
             int pinLX = max(x - patch, 0);
             int pinRX = min(x + patch, rr_map->get_gridx() - 1);
 
-            for (int p = -patch; p <= patch; ++p) {
+            for (int p = -patch; p <= patch; ++p)
+            {
                 int pinY = max(y + p, 0);
                 pinY = min(y + p, rr_map->get_gridy() - 1);
                 // printf("%d %d %d %d %d %d\n", pinLX, pinY, layer_idx+1, pinRX, pinY, layer_idx+1);
                 fout << rectToGuide(pinLX, pinY, pinRX, pinY, layer_idx + 1);
             }
         };
-        auto printCross = [&](int x, int y, int layer_idx, int patch) {
+        auto printCross = [&](int x, int y, int layer_idx, int patch)
+        {
             int pinLX = max(x - patch, 0);
             int pinRX = min(x + patch, rr_map->get_gridx() - 1);
             int pinLY = max(y - patch, 0);
@@ -1526,41 +1727,50 @@ void DP(int x, int y, int z) {
         bool is_19_9m = TESTCASE_NAME == "ispd19_test9_metal5";
         bool pin_patch2 = (TESTCASE_NAME == "ispd18_test10" || TESTCASE_NAME == "ispd19_test7");
 
-        if (is_19_7m) {
-            for (auto &pin : *pin_list) {
+        if (is_19_7m)
+        {
+            for (auto &pin : *pin_list)
+            {
                 int px = pin->get_tileX();
                 int py = pin->get_tileY();
                 int pz = pin->get_layerId();
                 pinMap.insert({px, py, pz});
 
                 bool patched = false;
-                if (pz < max_zz - 2) {
-                    if (needPatch(px, py, pz + 1) || needPatch(px, py, pz + 2)) {
+                if (pz < max_zz - 2)
+                {
+                    if (needPatch(px, py, pz + 1) || needPatch(px, py, pz + 2))
+                    {
                         patched = true;
                         printSrround(px, py, pz + 1, 1);
                         printSrround(px, py, pz + 2, 1);
                     }
-                    else {
+                    else
+                    {
                         // printf("%d %d %d %d %d %d\n", px, py, pz+1+1, px, py, pz+1+1);
                         // printf("%d %d %d %d %d %d\n", px, py, pz+2+1, px, py, pz+2+1);
                         fout << rectToGuide(px, py, px, py, pz + 1 + 1);
                         fout << rectToGuide(px, py, px, py, pz + 2 + 1);
                     }
                 }
-                if (pz > 1) {
-                    if (needPatch(px, py, pz - 1) || needPatch(px, py, pz - 2)) {
+                if (pz > 1)
+                {
+                    if (needPatch(px, py, pz - 1) || needPatch(px, py, pz - 2))
+                    {
                         patched = true;
                         printSrround(px, py, pz - 1, 1);
                         printSrround(px, py, pz - 2, 1);
                     }
-                    else {
+                    else
+                    {
                         // printf("%d %d %d %d %d %d\n", px, py, pz-1+1, px, py, pz-1+1);
                         // printf("%d %d %d %d %d %d\n", px, py, pz-2+1, px, py, pz-2+1);
                         fout << rectToGuide(px, py, px, py, pz - 1 + 1);
                         fout << rectToGuide(px, py, px, py, pz - 2 + 1);
                     }
                 }
-                if (patched) {
+                if (patched)
+                {
                     printSrround(px, py, pz, 0); // !
                                                  // printCross(px, py, pz, 1);
                 }
@@ -1569,41 +1779,50 @@ void DP(int x, int y, int z) {
                     fout << rectToGuide(px, py, px, py, pz + 1);
             }
         }
-        else if (is_19_9m) {
-            for (auto &pin : *pin_list) {
+        else if (is_19_9m)
+        {
+            for (auto &pin : *pin_list)
+            {
                 int px = pin->get_tileX();
                 int py = pin->get_tileY();
                 int pz = pin->get_layerId();
                 pinMap.insert({px, py, pz});
 
                 bool patched = false;
-                if (pz < max_zz - 2) {
-                    if (needPatch(px, py, pz + 1) || needPatch(px, py, pz + 2)) {
+                if (pz < max_zz - 2)
+                {
+                    if (needPatch(px, py, pz + 1) || needPatch(px, py, pz + 2))
+                    {
                         patched = true;
                         printSrround(px, py, pz + 1, 1);
                         printSrround(px, py, pz + 2, 1);
                     }
-                    else {
+                    else
+                    {
                         // printf("%d %d %d %d %d %d\n", px, py, pz+1+1, px, py, pz+1+1);
                         // printf("%d %d %d %d %d %d\n", px, py, pz+2+1, px, py, pz+2+1);
                         fout << rectToGuide(px, py, px, py, pz + 1 + 1);
                         fout << rectToGuide(px, py, px, py, pz + 2 + 1);
                     }
                 }
-                if (pz > 1) {
-                    if (needPatch(px, py, pz - 1) || needPatch(px, py, pz - 2)) {
+                if (pz > 1)
+                {
+                    if (needPatch(px, py, pz - 1) || needPatch(px, py, pz - 2))
+                    {
                         patched = true;
                         printSrround(px, py, pz - 1, 1);
                         printSrround(px, py, pz - 2, 1);
                     }
-                    else {
+                    else
+                    {
                         // printf("%d %d %d %d %d %d\n", px, py, pz-1+1, px, py, pz-1+1);
                         // printf("%d %d %d %d %d %d\n", px, py, pz-2+1, px, py, pz-2+1);
                         fout << rectToGuide(px, py, px, py, pz - 1 + 1);
                         fout << rectToGuide(px, py, px, py, pz - 2 + 1);
                     }
                 }
-                if (patched) {
+                if (patched)
+                {
                     printSrround(px, py, pz, 0); // !
                 }
                 else
@@ -1611,42 +1830,52 @@ void DP(int x, int y, int z) {
                     fout << rectToGuide(px, py, px, py, pz + 1);
             }
         }
-        else {
-            if (pin_patch2) {
-                for (auto &pin : *pin_list) {
+        else
+        {
+            if (pin_patch2)
+            {
+                for (auto &pin : *pin_list)
+                {
                     int px = pin->get_tileX();
                     int py = pin->get_tileY();
                     int pz = pin->get_layerId();
                     pinMap.insert({px, py, pz});
 
                     bool patched = false;
-                    if (pz < max_zz - 2) {
-                        if (needPatch(px, py, pz + 1) || needPatch(px, py, pz + 2)) {
+                    if (pz < max_zz - 2)
+                    {
+                        if (needPatch(px, py, pz + 1) || needPatch(px, py, pz + 2))
+                        {
                             patched = true;
                             printSrround(px, py, pz + 1, 2);
                             printSrround(px, py, pz + 2, 2);
                         }
-                        else {
+                        else
+                        {
                             // printf("%d %d %d %d %d %d\n", px, py, pz+1+1, px, py, pz+1+1);
                             // printf("%d %d %d %d %d %d\n", px, py, pz+2+1, px, py, pz+2+1);
                             fout << rectToGuide(px, py, px, py, pz + 1 + 1);
                             fout << rectToGuide(px, py, px, py, pz + 2 + 1);
                         }
                     }
-                    if (pz > 1) {
-                        if (needPatch(px, py, pz - 1) || needPatch(px, py, pz - 2)) {
+                    if (pz > 1)
+                    {
+                        if (needPatch(px, py, pz - 1) || needPatch(px, py, pz - 2))
+                        {
                             patched = true;
                             printSrround(px, py, pz - 1, 2);
                             printSrround(px, py, pz - 2, 2);
                         }
-                        else {
+                        else
+                        {
                             // printf("%d %d %d %d %d %d\n", px, py, pz-1+1, px, py, pz-1+1);
                             // printf("%d %d %d %d %d %d\n", px, py, pz-2+1, px, py, pz-2+1);
                             fout << rectToGuide(px, py, px, py, pz - 1 + 1);
                             fout << rectToGuide(px, py, px, py, pz - 2 + 1);
                         }
                     }
-                    if (patched) {
+                    if (patched)
+                    {
                         printSrround(px, py, pz, 2); //!
                     }
                     else
@@ -1654,41 +1883,50 @@ void DP(int x, int y, int z) {
                         fout << rectToGuide(px, py, px, py, pz + 1);
                 }
             }
-            else {
-                for (auto &pin : *pin_list) {
+            else
+            {
+                for (auto &pin : *pin_list)
+                {
                     int px = pin->get_tileX();
                     int py = pin->get_tileY();
                     int pz = pin->get_layerId();
                     pinMap.insert({px, py, pz});
 
                     bool patched = false;
-                    if (pz < max_zz - 2) {
-                        if (needPatch(px, py, pz + 1) || needPatch(px, py, pz + 2)) {
+                    if (pz < max_zz - 2)
+                    {
+                        if (needPatch(px, py, pz + 1) || needPatch(px, py, pz + 2))
+                        {
                             patched = true;
                             printSrround(px, py, pz + 1, 2);
                             printSrround(px, py, pz + 2, 2);
                         }
-                        else {
+                        else
+                        {
                             // printf("%d %d %d %d %d %d\n", px, py, pz+1+1, px, py, pz+1+1);
                             // printf("%d %d %d %d %d %d\n", px, py, pz+2+1, px, py, pz+2+1);
                             fout << rectToGuide(px, py, px, py, pz + 1 + 1);
                             fout << rectToGuide(px, py, px, py, pz + 2 + 1);
                         }
                     }
-                    if (pz > 1) {
-                        if (needPatch(px, py, pz - 1) || needPatch(px, py, pz - 2)) {
+                    if (pz > 1)
+                    {
+                        if (needPatch(px, py, pz - 1) || needPatch(px, py, pz - 2))
+                        {
                             patched = true;
                             printSrround(px, py, pz - 1, 2);
                             printSrround(px, py, pz - 2, 2);
                         }
-                        else {
+                        else
+                        {
                             // printf("%d %d %d %d %d %d\n", px, py, pz-1+1, px, py, pz-1+1);
                             // printf("%d %d %d %d %d %d\n", px, py, pz-2+1, px, py, pz-2+1);
                             fout << rectToGuide(px, py, px, py, pz - 1 + 1);
                             fout << rectToGuide(px, py, px, py, pz - 2 + 1);
                         }
                     }
-                    if (patched) {
+                    if (patched)
+                    {
                         printSrround(px, py, pz, 1); //!
                     }
                     else
@@ -1709,42 +1947,48 @@ void DP(int x, int y, int z) {
         q.push(&coord_3d_map[(*pin_list)[0]->get_tileX()][(*pin_list)[0]->get_tileY()]
                             [(*pin_list)[0]->get_layerId()]); // enqueue
                                                               // if (rr_map->get_net_name(net_id) == "pin1")
-        // 	printf("Pin: (%d, %d, %d) %d\n", (*pin_list)[0]->get_tileX(), (*pin_list)[0]->get_tileY(),
-        // (*pin_list)[0]->get_layerId(), pin_count);
+                                                              // 	printf("Pin: (%d, %d, %d) %d\n", (*pin_list)[0]->get_tileX(), (*pin_list)[0]->get_tileY(),
+                                                              // (*pin_list)[0]->get_layerId(), pin_count);
 #else
     q.push(&coord_3d_map[(*pin_list)[0]->get_tileX()][(*pin_list)[0]->get_tileY()][0]); // enqueue
 #endif
 
 #ifdef VERIFY_PIN_LEF
         int pinnum = rr_map->get_netPinNumber(net_id);
-        for (int i = 0; i < pinnum; i++) {
+        for (int i = 0; i < pinnum; i++)
+        {
             printf("(%d,%d,%d)\n", (*pin_list)[i]->get_tileX(), (*pin_list)[i]->get_tileY(),
                    (*pin_list)[i]->get_layerId());
         }
 #elif VERIFY_PIN_1
     int pinnum = rr_map->get_netPinNumber(net_id);
-    for (int i = 0; i < pinnum; i++) {
+    for (int i = 0; i < pinnum; i++)
+    {
         printf("(%d,%d,1)", (*pin_list)[i]->get_tileX(), (*pin_list)[i]->get_tileY());
     }
 #endif
         temp = q.front();
         BFS_color_map[temp->x][temp->y][temp->z] = net_id;
-        while (!q.empty()) {
+        while (!q.empty())
+        {
             temp = q.front();
-            for (dir = 0; dir < 6; dir += 2) {
+            for (dir = 0; dir < 6; dir += 2)
+            {
                 int dirPlusOne = dir + 1;
                 start.x = end.x = temp->x;
                 start.y = end.y = temp->y;
                 start.z = end.z = temp->z;
 
-                for (i = 1;; ++i) {
+                for (i = 1;; ++i)
+                {
                     start.x += cube_dir[dir][0];
                     start.y += cube_dir[dir][1];
                     start.z += cube_dir[dir][2];
-                    if (in_cube_and_have_edge(start.x, start.y, start.z, dir, net_id) == true
-                        && BFS_color_map[start.x][start.y][start.z] != net_id) {
+                    if (in_cube_and_have_edge(start.x, start.y, start.z, dir, net_id) == true && BFS_color_map[start.x][start.y][start.z] != net_id)
+                    {
                         BFS_color_map[start.x][start.y][start.z] = net_id;
-                        if (pinMap.count({start.x, start.y, start.z})) {
+                        if (pinMap.count({start.x, start.y, start.z}))
+                        {
                             pin_count++;
                             // if (rr_map->get_net_name(net_id) == "pin1")
                             // 	printf("Pin: (%d, %d, %d) %d\n", start.x, start.y, start.z, pin_count);
@@ -1752,21 +1996,24 @@ void DP(int x, int y, int z) {
                         if (have_child(start.x, start.y, start.z, dir, net_id) == true)
                             q.push(&coord_3d_map[start.x][start.y][start.z]); // enqueue
                     }
-                    else {
+                    else
+                    {
                         start.x -= cube_dir[dir][0];
                         start.y -= cube_dir[dir][1];
                         start.z -= cube_dir[dir][2];
                         break;
                     }
                 }
-                for (j = 1;; ++j) {
+                for (j = 1;; ++j)
+                {
                     end.x += cube_dir[dirPlusOne][0];
                     end.y += cube_dir[dirPlusOne][1];
                     end.z += cube_dir[dirPlusOne][2];
-                    if (in_cube_and_have_edge(end.x, end.y, end.z, dirPlusOne, net_id) == true
-                        && BFS_color_map[end.x][end.y][end.z] != net_id) {
+                    if (in_cube_and_have_edge(end.x, end.y, end.z, dirPlusOne, net_id) == true && BFS_color_map[end.x][end.y][end.z] != net_id)
+                    {
                         BFS_color_map[end.x][end.y][end.z] = net_id;
-                        if (pinMap.count({end.x, end.y, end.z})) {
+                        if (pinMap.count({end.x, end.y, end.z}))
+                        {
                             pin_count++;
                             // if (rr_map->get_net_name(net_id) == "pin1")
                             // 	printf("Pin: (%d, %d, %d) %d\n", end.x, end.y, end.z, pin_count);
@@ -1774,7 +2021,8 @@ void DP(int x, int y, int z) {
                         if (have_child(end.x, end.y, end.z, dirPlusOne, net_id) == true)
                             q.push(&coord_3d_map[end.x][end.y][end.z]); // enqueue
                     }
-                    else {
+                    else
+                    {
                         end.x -= cube_dir[dirPlusOne][0];
                         end.y -= cube_dir[dirPlusOne][1];
                         end.z -= cube_dir[dirPlusOne][2];
@@ -1789,26 +2037,31 @@ void DP(int x, int y, int z) {
                     // printf("%d %d %d %d %d %d\n", start.x, start.y, start.z, end.x, end.y, end.z);
                     assert(start.x == end.x || start.y == end.y);
 
-                    if (start.z == end.z) {
+                    if (start.z == end.z)
+                    {
                         fout << rectToGuide(start.x, start.y, end.x, end.y, start.z);
 #ifdef PATCHING
                         const double THRESH = 2.0;
                         const int LENGTH = 5;
                         int length, p_start, p_end;
-                        if (start.x == end.x) {
+                        if (start.x == end.x)
+                        {
                             p_start = min(start.y, end.y);
                             p_end = max(start.y, end.y);
                             length = p_end - p_start + 1;
-                            if (length >= LENGTH) {
-                                for (int p = p_start; p <= p_end;) {
+                            if (length >= LENGTH)
+                            {
+                                for (int p = p_start; p <= p_end;)
+                                {
                                     bool patched = false;
-                                    if (cur_map_3d[start.x][p][start.z - 1].cap < THRESH) {
+                                    if (cur_map_3d[start.x][p][start.z - 1].cap < THRESH)
+                                    {
                                         // printf("%d %d %d %d %d %d\n", max(start.x-1, 0), p, start.z, min(start.x+1,
                                         // rr_map->get_gridx()-1), p, start.z);
                                         fout << rectToGuide(max(start.x - 1, 0), p,
                                                             min(start.x + 1, rr_map->get_gridx() - 1), p, start.z);
-                                        if (start.z - 1 + 1 < max_zz
-                                            && cur_map_3d[start.x][p][start.z - 1 + 1].cap >= THRESH) {
+                                        if (start.z - 1 + 1 < max_zz && cur_map_3d[start.x][p][start.z - 1 + 1].cap >= THRESH)
+                                        {
                                             patched = true;
                                             // printf("%d %d %d %d %d %d\n", max(start.x-1, 0), p, start.z+1,
                                             // min(start.x+1, rr_map->get_gridx()-1), p, start.z+1);
@@ -1816,8 +2069,8 @@ void DP(int x, int y, int z) {
                                                                 min(start.x + 1, rr_map->get_gridx() - 1), p,
                                                                 start.z + 1);
                                         }
-                                        if (start.z - 1 - 1 >= 1
-                                            && cur_map_3d[start.x][p][start.z - 1 - 1].cap >= THRESH) {
+                                        if (start.z - 1 - 1 >= 1 && cur_map_3d[start.x][p][start.z - 1 - 1].cap >= THRESH)
+                                        {
                                             patched = true;
                                             // printf("%d %d %d %d %d %d\n", max(start.x-1, 0), p, start.z-1,
                                             // min(start.x+1, rr_map->get_gridx()-1), p, start.z-1);
@@ -1846,28 +2099,32 @@ void DP(int x, int y, int z) {
                             // 	}
                             // }
                         }
-                        else {
+                        else
+                        {
                             p_start = min(start.x, end.x);
                             p_end = max(start.x, end.x);
                             length = p_end - p_start + 1;
-                            if (length >= LENGTH) {
-                                for (int p = p_start; p <= p_end;) {
+                            if (length >= LENGTH)
+                            {
+                                for (int p = p_start; p <= p_end;)
+                                {
                                     bool patched = false;
-                                    if (cur_map_3d[p][start.y][start.z - 1].cap < THRESH) {
+                                    if (cur_map_3d[p][start.y][start.z - 1].cap < THRESH)
+                                    {
                                         // printf("%d %d %d %d %d %d\n", p, max(start.y-1, 0), start.z+1, p,
                                         // min(start.y+1, rr_map->get_gridy()-1), start.z+1);
                                         fout << rectToGuide(p, max(start.y - 1, 0), p,
                                                             min(start.y + 1, rr_map->get_gridy() - 1), start.z + 1);
-                                        if (start.z - 1 + 1 < max_zz
-                                            && cur_map_3d[p][start.y][start.z - 1 + 1].cap >= THRESH) {
+                                        if (start.z - 1 + 1 < max_zz && cur_map_3d[p][start.y][start.z - 1 + 1].cap >= THRESH)
+                                        {
                                             patched = true;
                                             // printf("%d %d %d %d %d %d\n", p, max(start.y-1, 0), start.z+1, p,
                                             // min(start.y+1, rr_map->get_gridy()-1), start.z+1);
                                             fout << rectToGuide(p, max(start.y - 1, 0), p,
                                                                 min(start.y + 1, rr_map->get_gridy() - 1), start.z + 1);
                                         }
-                                        if (start.z - 1 - 1 >= 1
-                                            && cur_map_3d[p][start.y][start.z - 1 - 1].cap >= THRESH) {
+                                        if (start.z - 1 - 1 >= 1 && cur_map_3d[p][start.y][start.z - 1 - 1].cap >= THRESH)
+                                        {
                                             patched = true;
                                             // printf("%d %d %d %d %d %d\n", p, max(start.y-1, 0), start.z-1, p,
                                             // min(start.y+1, rr_map->get_gridy()-1), start.z-1);
@@ -1897,56 +2154,52 @@ void DP(int x, int y, int z) {
                         }
 #endif
                     }
-                    else {
-                        // fout << start.x << ' ' << start.y << ' ' << start.z << ' ' << end.z << std::endl;
-                        fout << viaToGuide(start.x, start.y, start.z, end.z);
+                    else
+                    {
+                    // same (x,y) different z add via
+                    if (std::find(lost_pin_net.begin(), lost_pin_net.end(), net_id) != lost_pin_net.end())
+                    {
+                        int pin_num = rr_map->get_netPinNumber(net_id);
+                        for (int k = 0; k < pin_num; k++)
+                        {
+                            if ((*pin_list)[k]->get_tileX() == start.x && (*pin_list)[k]->get_tileY() == start.y)
+                            {
+                                std::cout << "lost pin net add via " << netName << endl;
+                                std::cout << "pin " << start.x << " " << start.y << endl;
+                                int layer = (*pin_list)[k]->get_layerId();
+                                if (start.z < end.z)
+                                    swap(start.z, end.z);
+
+                                if (layer >= start.z)
+                                    start.z = layer + 1;
+                                if (layer < end.z)
+                                    end.z = layer + 1;
+                                cout << "start z : " << start.z << " end z : " << end.z << endl;
+                        }
                     }
                 }
+                    fout << viaToGuide(start.x, start.y, start.z, end.z);
+                }
             }
-            q.pop();
         }
-        /*
-            for (auto const& [key, val] : routeGuideMap) {
-                auto [x, y, k] = key;
-                assert(val);
-                if (k-1 >= 1) {
-                    if (!routeGuideMap.count({x, y, k-1})) {
-                        bool has_neighbor = false;
-                        if (database.getLayerDir(k-1-1) == Y) { // Horizontal
-                            if (x > 0 && routeGuideMap.count({x-1, y, k-1}))
-                                has_neighbor = true;
-                            if (x < rr_map->get_gridx()-1 && routeGuideMap.count({x+1, y, k-1}))
-                                has_neighbor = true;
-                        } else {
-                            if (y > 0 && routeGuideMap.count({x, y-1, k-1}))
-                                has_neighbor = true;
-                            if (y < rr_map->get_gridy()-1 && routeGuideMap.count({x, y+1, k-1}))
-                                has_neighbor = true;
-                        }
-                        if (has_neighbor) {
-                            // printf("patch (%d, %d, %d)\n", x, y, k-1);
-                            routeGuideMap[{x, y, k-1}] = true;
-                            printf("%d %d %d %d %d %d\n", x, y, k-1, x, y, k-1);
-                        }
-                    }
-                }
-            }
-        */
-        // the end of a net of output file
-        // printf(")\n");
+        q.pop();
+    }
         fout << ")\n";
         // printf("pin_count = %d, %d\n", pin_count, (*pin_list).size());
         // assert(pin_count == (*pin_list).size());
     }
 
-    void klat(int net_id) {
+    void klat(int net_id)
+    {
 #ifdef PRINT_DP_PIN
         // get_netSerialNumber(int netId)
         // get_netId(int netSerial)
-        if (net_id == 172) {
+        if (net_id == 172)
+        {
             check_net = true;
         }
-        else {
+        else
+        {
             check_net = false;
         }
 
@@ -1960,9 +2213,11 @@ void DP(int x, int y, int z) {
         start_pin_layer = (*pin_list)[0]->get_layerId();
 
 #ifdef PRINT_DP_PIN
-        if (check_net) {
+        if (check_net)
+        {
             std::cout << "pin_num = " << pin_list->size() << std::endl;
-            for (int i = 0; i < pin_list->size(); i++) {
+            for (int i = 0; i < pin_list->size(); i++)
+            {
                 std::cout << i
                           << ":"
                              "x = "
@@ -2023,15 +2278,18 @@ void DP(int x, int y, int z) {
         */
     }
 
-    int count_via_overflow_for_a_segment(int x, int y, int start, int end) {
+    int count_via_overflow_for_a_segment(int x, int y, int start, int end)
+    {
         int sum = 0, temp;
 
-        if (start > end) {
+        if (start > end)
+        {
             temp = start;
             start = end;
             end = temp;
         }
-        while (start < end) {
+        while (start < end)
+        {
             if (viadensity_map[x][y][start].cur >= viadensity_map[x][y][start].max)
                 ++sum;
             ++start;
@@ -2040,14 +2298,16 @@ void DP(int x, int y, int z) {
         return sum;
     }
 
-    void greedy_layer_assignment(int x, int y, int z) {
+    void greedy_layer_assignment(int x, int y, int z)
+    {
         int dir, z_min, z_max, k;
         queue<Coordinate_3d *> q;
         Coordinate_3d *temp;
         int k_via_overflow, z_via_overflow = 0;
 
         q.push(&coord_3d_map[x][y][z]);
-        while (!q.empty()) {
+        while (!q.empty())
+        {
             temp = q.front();
             if (path_map[temp->x][temp->y].val == 2) // a pin
                 z_min = 0;
@@ -2066,82 +2326,72 @@ void DP(int x, int y, int z) {
                         else if ((dir == 2 || dir == 3) && prefer_direction[k][0] == 1)
                             break;
 #else
-                    k = 0;
+                k = 0;
 #endif
                     k_via_overflow = count_via_overflow_for_a_segment(temp->x, temp->y, k, z_max);
                     for (z = k + 1; z < max_zz; ++z)
 #ifdef FOLLOW_PREFER
-                        if (((dir == 0 || dir == 1) && prefer_direction[z][1] == 1)
-                            || ((dir == 2 || dir == 3) && prefer_direction[z][0] == 1)) {
+                        if (((dir == 0 || dir == 1) && prefer_direction[z][1] == 1) || ((dir == 2 || dir == 3) && prefer_direction[z][0] == 1))
+                        {
 #endif
-                            if (cur_map_3d[temp->x][temp->y][z].edge_list[dir]->cur_cap
-                                < cur_map_3d[temp->x][temp->y][z].edge_list[dir]->max_cap) {
+                            if (cur_map_3d[temp->x][temp->y][z].edge_list[dir]->cur_cap < cur_map_3d[temp->x][temp->y][z].edge_list[dir]->max_cap)
+                            {
 #ifdef VIA_DENSITY
-                                if (cur_map_3d[temp->x][temp->y][k].edge_list[dir]->cur_cap
-                                    < cur_map_3d[temp->x][temp->y][k].edge_list[dir]->max_cap) {
+                                if (cur_map_3d[temp->x][temp->y][k].edge_list[dir]->cur_cap < cur_map_3d[temp->x][temp->y][k].edge_list[dir]->max_cap)
+                                {
                                     z_via_overflow = count_via_overflow_for_a_segment(temp->x, temp->y, MIN(z, z_min),
                                                                                       MAX(z, z_max));
-                                    if (z_via_overflow < k_via_overflow) {
+                                    if (z_via_overflow < k_via_overflow)
+                                    {
                                         k = z;
                                         k_via_overflow = z_via_overflow;
                                     }
-                                    else if (z_via_overflow == k_via_overflow) {
-                                        if (abs(z - temp->z) < abs(k - temp->z)) {
+                                    else if (z_via_overflow == k_via_overflow)
+                                    {
+                                        if (abs(z - temp->z) < abs(k - temp->z))
+                                        {
                                             k = z;
                                             k_via_overflow = z_via_overflow;
                                         }
                                     }
                                 }
-                                else if (cur_map_3d[temp->x][temp->y][k].edge_list[dir]->cur_cap
-                                         >= cur_map_3d[temp->x][temp->y][k].edge_list[dir]->max_cap) {
+                                else if (cur_map_3d[temp->x][temp->y][k].edge_list[dir]->cur_cap >= cur_map_3d[temp->x][temp->y][k].edge_list[dir]->max_cap)
+                                {
                                     k = z;
                                     k_via_overflow = z_via_overflow;
                                 }
-#else                           
-                                // connect via
-                                if ((cur_map_3d[temp->x][temp->y][k].edge_list[dir]->cur_cap
-                                         < cur_map_3d[temp->x][temp->y][k].edge_list[dir]->max_cap
-                                     && abs(z - temp->z) < abs(k - temp->z))
-                                    || (cur_map_3d[temp->x][temp->y][k].edge_list[dir]->cur_cap
-                                        >= cur_map_3d[temp->x][temp->y][k].edge_list[dir]->max_cap))
-                                    k = z;
+#else
+                        // connect via
+                        if ((cur_map_3d[temp->x][temp->y][k].edge_list[dir]->cur_cap < cur_map_3d[temp->x][temp->y][k].edge_list[dir]->max_cap && abs(z - temp->z) < abs(k - temp->z)) || (cur_map_3d[temp->x][temp->y][k].edge_list[dir]->cur_cap >= cur_map_3d[temp->x][temp->y][k].edge_list[dir]->max_cap))
+                            k = z;
 #endif
                             }
-                            else {
+                            else
+                            {
 #ifdef VIA_DENSITY
-                                if (cur_map_3d[temp->x][temp->y][z].edge_list[dir]->cur_cap
-                                        - cur_map_3d[temp->x][temp->y][z].edge_list[dir]->max_cap
-                                    < cur_map_3d[temp->x][temp->y][k].edge_list[dir]->cur_cap
-                                          - cur_map_3d[temp->x][temp->y][k].edge_list[dir]->max_cap)
+                                if (cur_map_3d[temp->x][temp->y][z].edge_list[dir]->cur_cap - cur_map_3d[temp->x][temp->y][z].edge_list[dir]->max_cap < cur_map_3d[temp->x][temp->y][k].edge_list[dir]->cur_cap - cur_map_3d[temp->x][temp->y][k].edge_list[dir]->max_cap)
                                     k = z;
-                                else if (cur_map_3d[temp->x][temp->y][z].edge_list[dir]->cur_cap
-                                             - cur_map_3d[temp->x][temp->y][z].edge_list[dir]->max_cap
-                                         == cur_map_3d[temp->x][temp->y][k].edge_list[dir]->cur_cap
-                                                - cur_map_3d[temp->x][temp->y][k].edge_list[dir]->max_cap) {
+                                else if (cur_map_3d[temp->x][temp->y][z].edge_list[dir]->cur_cap - cur_map_3d[temp->x][temp->y][z].edge_list[dir]->max_cap == cur_map_3d[temp->x][temp->y][k].edge_list[dir]->cur_cap - cur_map_3d[temp->x][temp->y][k].edge_list[dir]->max_cap)
+                                {
                                     z_via_overflow = count_via_overflow_for_a_segment(temp->x, temp->y, MIN(z, z_min),
                                                                                       MAX(z, z_max));
-                                    if (z_via_overflow < k_via_overflow) {
+                                    if (z_via_overflow < k_via_overflow)
+                                    {
                                         k = z;
                                         k_via_overflow = z_via_overflow;
                                     }
-                                    else if (z_via_overflow == k_via_overflow) {
-                                        if (abs(z - temp->z) < abs(k - temp->z)) {
+                                    else if (z_via_overflow == k_via_overflow)
+                                    {
+                                        if (abs(z - temp->z) < abs(k - temp->z))
+                                        {
                                             k = z;
                                             k_via_overflow = z_via_overflow;
                                         }
                                     }
                                 }
 #else
-                                if ((cur_map_3d[temp->x][temp->y][z].edge_list[dir]->cur_cap
-                                         - cur_map_3d[temp->x][temp->y][z].edge_list[dir]->max_cap
-                                     < cur_map_3d[temp->x][temp->y][k].edge_list[dir]->cur_cap
-                                           - cur_map_3d[temp->x][temp->y][k].edge_list[dir]->max_cap)
-                                    || (cur_map_3d[temp->x][temp->y][z].edge_list[dir]->cur_cap
-                                                - cur_map_3d[temp->x][temp->y][z].edge_list[dir]->max_cap
-                                            == cur_map_3d[temp->x][temp->y][k].edge_list[dir]->cur_cap
-                                                   - cur_map_3d[temp->x][temp->y][k].edge_list[dir]->max_cap
-                                        && abs(z - temp->z) < abs(k - temp->z)))
-                                    k = z;
+                        if ((cur_map_3d[temp->x][temp->y][z].edge_list[dir]->cur_cap - cur_map_3d[temp->x][temp->y][z].edge_list[dir]->max_cap < cur_map_3d[temp->x][temp->y][k].edge_list[dir]->cur_cap - cur_map_3d[temp->x][temp->y][k].edge_list[dir]->max_cap) || (cur_map_3d[temp->x][temp->y][z].edge_list[dir]->cur_cap - cur_map_3d[temp->x][temp->y][z].edge_list[dir]->max_cap == cur_map_3d[temp->x][temp->y][k].edge_list[dir]->cur_cap - cur_map_3d[temp->x][temp->y][k].edge_list[dir]->max_cap && abs(z - temp->z) < abs(k - temp->z)))
+                            k = z;
 #endif
                             }
 #ifdef FOLLOW_PREFER
@@ -2160,7 +2410,8 @@ void DP(int x, int y, int z) {
         }
     }
 
-    void greedy(int net_id) {
+    void greedy(int net_id)
+    {
         const PinptrList *pin_list = &rr_map->get_nPin(net_id);
         Coordinate_2d *start;
 
@@ -2171,7 +2422,8 @@ void DP(int x, int y, int z) {
         greedy_layer_assignment(start->x, start->y, 0);
     }
 
-    int comp_temp_net_order(const void *a, const void *b) {
+    int comp_temp_net_order(const void *a, const void *b)
+    {
         int p, q;
 
         p = *((int *)a);
@@ -2186,16 +2438,19 @@ void DP(int x, int y, int z) {
         // }
     }
 
-    int backtrace(int n) {
+    int backtrace(int n)
+    {
         assert(n != -1);
-        if (group_set[n].pi != n) {
+        if (group_set[n].pi != n)
+        {
             group_set[n].pi = backtrace(group_set[n].pi);
             return group_set[n].pi;
         }
         return group_set[n].pi;
     }
 
-    void find_group(int max) {
+    void find_group(int max)
+    {
         cout << "In find_group 1" << endl;
         int i, j, k;
         LRoutedNetTable::iterator iter, iter2;
@@ -2216,7 +2471,8 @@ void DP(int x, int y, int z) {
         cout << "In find_group 2" << endl;
         average_order = (AVERAGE_NODE *)malloc(sizeof(AVERAGE_NODE) * max);
         assert(average_order);
-        for (i = 0; i < max; ++i) {
+        for (i = 0; i < max; ++i)
+        {
             group_set[i].pi = i;
             group_set[i].sx = group_set[i].sy = 1000000;
             group_set[i].bx = group_set[i].by = -1;
@@ -2231,7 +2487,8 @@ void DP(int x, int y, int z) {
         ;
 
         for (i = 1; i < max_xx; ++i)
-            for (j = 0; j < max_yy; ++j) {
+            for (j = 0; j < max_yy; ++j)
+            {
                 temp_cap = (congestionMap2d->edge(i, j, DIR_WEST).used_net.size()); // modified
                 for (k = 0; k < max_zz && temp_cap > 0; ++k)
                     if (cur_map_3d[i][j][k].edge_list[LEFT]->max_cap > 0)
@@ -2240,34 +2497,41 @@ void DP(int x, int y, int z) {
                     max_layer = max_zz - 1;
                 else
                     max_layer = k;
-                if (congestionMap2d->edge(i, j, DIR_WEST).isOverflow() == false) {
-                    if (congestionMap2d->edge(i, j, DIR_WEST).used_net.size() > 0) {
+                if (congestionMap2d->edge(i, j, DIR_WEST).isOverflow() == false)
+                {
+                    if (congestionMap2d->edge(i, j, DIR_WEST).used_net.size() > 0)
+                    {
                         for (k = 0; k < max_zz && cur_map_3d[i][j][k].edge_list[LEFT]->max_cap == 0; ++k)
                             ;
-                        if (k < max_zz) {
-                            if (cur_map_3d[i][j][k].edge_list[LEFT]->max_cap
-                                < (int)(congestionMap2d->edge(i, j, DIR_WEST).used_net.size())) // modified
+                        if (k < max_zz)
+                        {
+                            if (cur_map_3d[i][j][k].edge_list[LEFT]->max_cap < (int)(congestionMap2d->edge(i, j, DIR_WEST).used_net.size())) // modified
                                 for (RoutedNetTable::iterator iter =
                                          congestionMap2d->edge(i, j, DIR_WEST).used_net.begin();
-                                     iter != congestionMap2d->edge(i, j, DIR_WEST).used_net.end(); ++iter) {
+                                     iter != congestionMap2d->edge(i, j, DIR_WEST).used_net.end(); ++iter)
+                                {
                                     pre_solve[iter->first] = false;
                                 }
                         }
                         else
                             for (RoutedNetTable::iterator iter = congestionMap2d->edge(i, j, DIR_WEST).used_net.begin();
-                                 iter != congestionMap2d->edge(i, j, DIR_WEST).used_net.end(); ++iter) {
+                                 iter != congestionMap2d->edge(i, j, DIR_WEST).used_net.end(); ++iter)
+                            {
                                 pre_solve[iter->first] = false;
                             }
                     }
                 }
-                else {
+                else
+                {
                     for (RoutedNetTable::iterator iter = congestionMap2d->edge(i, j, DIR_WEST).used_net.begin();
-                         iter != congestionMap2d->edge(i, j, DIR_WEST).used_net.end(); ++iter) {
+                         iter != congestionMap2d->edge(i, j, DIR_WEST).used_net.end(); ++iter)
+                    {
                         pre_solve[iter->first] = false;
                     }
                 }
                 for (RoutedNetTable::iterator iter = congestionMap2d->edge(i, j, DIR_WEST).used_net.begin();
-                     iter != congestionMap2d->edge(i, j, DIR_WEST).used_net.end(); ++iter) {
+                     iter != congestionMap2d->edge(i, j, DIR_WEST).used_net.end(); ++iter)
+                {
                     if (i - 1 < group_set[iter->first].sx)
                         group_set[iter->first].sx = i - 1;
                     if (i > group_set[iter->first].bx)
@@ -2283,7 +2547,8 @@ void DP(int x, int y, int z) {
         cout << "In find_group 4" << endl;
 
         for (i = 0; i < max_xx; ++i)
-            for (j = 1; j < max_yy; ++j) {
+            for (j = 1; j < max_yy; ++j)
+            {
                 temp_cap = (congestionMap2d->edge(i, j, DIR_SOUTH).used_net.size()); // modified
                 for (k = 0; k < max_zz && temp_cap > 0; ++k)
                     if (cur_map_3d[i][j][k].edge_list[BACK]->max_cap > 0)
@@ -2292,35 +2557,42 @@ void DP(int x, int y, int z) {
                     max_layer = max_zz - 1;
                 else
                     max_layer = k;
-                if (congestionMap2d->edge(i, j, DIR_SOUTH).isOverflow() == false) {
-                    if (congestionMap2d->edge(i, j, DIR_SOUTH).used_net.size() > 0) {
+                if (congestionMap2d->edge(i, j, DIR_SOUTH).isOverflow() == false)
+                {
+                    if (congestionMap2d->edge(i, j, DIR_SOUTH).used_net.size() > 0)
+                    {
                         for (k = 0; k < max_zz && cur_map_3d[i][j][k].edge_list[BACK]->max_cap == 0; ++k)
                             ;
-                        if (k < max_zz) {
-                            if (cur_map_3d[i][j][k].edge_list[BACK]->max_cap
-                                < (int)(congestionMap2d->edge(i, j, DIR_SOUTH).used_net.size())) // modified
+                        if (k < max_zz)
+                        {
+                            if (cur_map_3d[i][j][k].edge_list[BACK]->max_cap < (int)(congestionMap2d->edge(i, j, DIR_SOUTH).used_net.size())) // modified
                                 for (RoutedNetTable::iterator iter =
                                          congestionMap2d->edge(i, j, DIR_SOUTH).used_net.begin();
-                                     iter != congestionMap2d->edge(i, j, DIR_SOUTH).used_net.end(); ++iter) {
+                                     iter != congestionMap2d->edge(i, j, DIR_SOUTH).used_net.end(); ++iter)
+                                {
                                     pre_solve[iter->first] = false;
                                 }
                         }
                         else
                             for (RoutedNetTable::iterator iter =
                                      congestionMap2d->edge(i, j, DIR_SOUTH).used_net.begin();
-                                 iter != congestionMap2d->edge(i, j, DIR_SOUTH).used_net.end(); ++iter) {
+                                 iter != congestionMap2d->edge(i, j, DIR_SOUTH).used_net.end(); ++iter)
+                            {
                                 pre_solve[iter->first] = false;
                             }
                     }
                 }
-                else {
+                else
+                {
                     for (RoutedNetTable::iterator iter = congestionMap2d->edge(i, j, DIR_SOUTH).used_net.begin();
-                         iter != congestionMap2d->edge(i, j, DIR_SOUTH).used_net.end(); ++iter) {
+                         iter != congestionMap2d->edge(i, j, DIR_SOUTH).used_net.end(); ++iter)
+                    {
                         pre_solve[iter->first] = false;
                     }
                 }
                 for (RoutedNetTable::iterator iter = congestionMap2d->edge(i, j, DIR_SOUTH).used_net.begin();
-                     iter != congestionMap2d->edge(i, j, DIR_SOUTH).used_net.end(); ++iter) {
+                     iter != congestionMap2d->edge(i, j, DIR_SOUTH).used_net.end(); ++iter)
+                {
                     if (i < group_set[iter->first].sx)
                         group_set[iter->first].sx = i;
                     if (i > group_set[iter->first].bx)
@@ -2338,18 +2610,21 @@ void DP(int x, int y, int z) {
             if (pre_solve[i] == true)
                 group_set[i].pi = -1;
         for (i = 1; i < max_xx; ++i)
-            for (j = 0; j < max_yy; ++j) {
+            for (j = 0; j < max_yy; ++j)
+            {
                 for (k = 0; k < max_zz && cur_map_3d[i][j][k].edge_list[LEFT]->max_cap == 0; ++k)
                     ;
-                if ((int)(congestionMap2d->edge(i, j, DIR_WEST).used_net.size())
-                    > cur_map_3d[i][j][k].edge_list[LEFT]->max_cap) // modified
+                if ((int)(congestionMap2d->edge(i, j, DIR_WEST).used_net.size()) > cur_map_3d[i][j][k].edge_list[LEFT]->max_cap) // modified
                 {
-                    if (congestionMap2d->edge(i, j, DIR_WEST).used_net.size() > 1) {
+                    if (congestionMap2d->edge(i, j, DIR_WEST).used_net.size() > 1)
+                    {
                         RoutedNetTable::iterator iter = congestionMap2d->edge(i, j, DIR_WEST).used_net.begin();
                         a = backtrace(iter->first);
-                        for (iter++; iter != congestionMap2d->edge(i, j, DIR_WEST).used_net.end(); ++iter) {
+                        for (iter++; iter != congestionMap2d->edge(i, j, DIR_WEST).used_net.end(); ++iter)
+                        {
                             b = backtrace(iter->first);
-                            if (a != b) {
+                            if (a != b)
+                            {
                                 group_set[b].pi = a;
                                 group_set[a].num += group_set[b].num;
                             }
@@ -2360,18 +2635,21 @@ void DP(int x, int y, int z) {
         cout << "In find_group 6\n";
 
         for (i = 0; i < max_xx; ++i)
-            for (j = 1; j < max_yy; ++j) {
+            for (j = 1; j < max_yy; ++j)
+            {
                 for (k = 0; k < max_zz && cur_map_3d[i][j][k].edge_list[BACK]->max_cap == 0; ++k)
                     ;
-                if ((int)(congestionMap2d->edge(i, j, DIR_SOUTH).used_net.size())
-                    > cur_map_3d[i][j][k].edge_list[BACK]->max_cap) // modified
+                if ((int)(congestionMap2d->edge(i, j, DIR_SOUTH).used_net.size()) > cur_map_3d[i][j][k].edge_list[BACK]->max_cap) // modified
                 {
-                    if (congestionMap2d->edge(i, j, DIR_SOUTH).used_net.size() > 1) {
+                    if (congestionMap2d->edge(i, j, DIR_SOUTH).used_net.size() > 1)
+                    {
                         RoutedNetTable::iterator iter = congestionMap2d->edge(i, j, DIR_SOUTH).used_net.begin();
                         a = backtrace(iter->first);
-                        for (iter++; iter != congestionMap2d->edge(i, j, DIR_SOUTH).used_net.end(); ++iter) {
+                        for (iter++; iter != congestionMap2d->edge(i, j, DIR_SOUTH).used_net.end(); ++iter)
+                        {
                             b = backtrace(iter->first);
-                            if (a != b) {
+                            if (a != b)
+                            {
                                 group_set[b].pi = a;
                                 group_set[a].num += group_set[b].num;
                             }
@@ -2381,7 +2659,8 @@ void DP(int x, int y, int z) {
             }
         cout << "In find_group 7\n";
 
-        for (i = 0; i < max; ++i) {
+        for (i = 0; i < max; ++i)
+        {
             if (temp_buf[2] == '0' || temp_buf[2] == '1') // normal and random
 #ifdef VIA_DENSITY
                 average_order[i].average =
@@ -2401,7 +2680,8 @@ void DP(int x, int y, int z) {
         cout << "In find_group 8\n";
     }
 
-    void initial_BFS_color_map(void) {
+    void initial_BFS_color_map(void)
+    {
         int i, j, k;
 
         for (i = 0; i < max_xx; ++i)
@@ -2410,21 +2690,25 @@ void DP(int x, int y, int z) {
                     BFS_color_map[i][j][k] = -1;
     }
 
-    void malloc_BFS_color_map(void) {
+    void malloc_BFS_color_map(void)
+    {
         int i, j;
 
         BFS_color_map = (int ***)malloc(sizeof(int **) * max_xx);
-        for (i = 0; i < max_xx; ++i) {
+        for (i = 0; i < max_xx; ++i)
+        {
             BFS_color_map[i] = (int **)malloc(sizeof(int *) * max_yy);
             for (j = 0; j < max_yy; ++j)
                 BFS_color_map[i][j] = (int *)malloc(sizeof(int) * max_zz);
         }
     }
 
-    void free_BFS_color_map(void) {
+    void free_BFS_color_map(void)
+    {
         int i, j;
 
-        for (i = 0; i < max_xx; ++i) {
+        for (i = 0; i < max_xx; ++i)
+        {
             for (j = 0; j < max_yy; ++j)
                 free(BFS_color_map[i][j]);
             free(BFS_color_map[i]);
@@ -2432,19 +2716,23 @@ void DP(int x, int y, int z) {
         free(BFS_color_map);
     }
 
-    void calculate_wirelength(void) {
+    void calculate_wirelength(void)
+    {
         int i, j, k, xy = 0, z = 0;
         LRoutedNetTable::iterator iter;
 
-        for (k = 0; k < max_zz; ++k) {
+        for (k = 0; k < max_zz; ++k)
+        {
             for (i = 1; i < max_xx; ++i)
                 for (j = 0; j < max_yy; ++j)
-                    if (cur_map_3d[i][j][k].edge_list[LEFT]->used_net.size()) {
+                    if (cur_map_3d[i][j][k].edge_list[LEFT]->used_net.size())
+                    {
                         xy += cur_map_3d[i][j][k].edge_list[LEFT]->used_net.size();
                     }
             for (i = 0; i < max_xx; ++i)
                 for (j = 1; j < max_yy; ++j)
-                    if (cur_map_3d[i][j][k].edge_list[BACK]->used_net.size()) {
+                    if (cur_map_3d[i][j][k].edge_list[BACK]->used_net.size())
+                    {
                         xy += cur_map_3d[i][j][k].edge_list[BACK]->used_net.size();
                     }
         }
@@ -2459,18 +2747,21 @@ void DP(int x, int y, int z) {
 #endif
     }
 
-    void erase_cur_map_3d(void) {
+    void erase_cur_map_3d(void)
+    {
         int i, j, k;
 
         for (i = 1; i < max_xx; ++i)
             for (j = 0; j < max_yy; ++j)
-                for (k = 0; k < max_zz; ++k) {
+                for (k = 0; k < max_zz; ++k)
+                {
                     cur_map_3d[i][j][k].edge_list[LEFT]->cur_cap = 0;
                     cur_map_3d[i][j][k].edge_list[LEFT]->used_net.clear();
                 }
         for (i = 0; i < max_xx; ++i)
             for (j = 1; j < max_yy; ++j)
-                for (k = 0; k < max_zz; ++k) {
+                for (k = 0; k < max_zz; ++k)
+                {
                     cur_map_3d[i][j][k].edge_list[BACK]->cur_cap = 0;
                     cur_map_3d[i][j][k].edge_list[BACK]->used_net.clear();
                 }
@@ -2480,10 +2771,12 @@ void DP(int x, int y, int z) {
                     cur_map_3d[i][j][k].edge_list[DOWN]->used_net.clear();
     }
 
-    void multiply_viadensity_map_by_times(double times) {
+    void multiply_viadensity_map_by_times(double times)
+    {
         int i, j, k;
 
-        for (k = 1; k < max_zz; ++k) {
+        for (k = 1; k < max_zz; ++k)
+        {
             double temp =
                 (cur_map_3d[1][0][k - 1].edge_list[LEFT]->max_cap > 0)
                     ? (cur_map_3d[1][0][k - 1].edge_list[LEFT]->max_cap * cur_map_3d[0][1][k].edge_list[BACK]->max_cap)
@@ -2491,234 +2784,248 @@ void DP(int x, int y, int z) {
             temp = times * temp;
             temp /= 4.0;
             for (i = 0; i < max_xx; ++i)
-                for (j = 0; j < max_yy; ++j) {
+                for (j = 0; j < max_yy; ++j)
+                {
                     viadensity_map[i][j][k - 1].max = (int)temp;
                 }
         }
     }
 
-    void sort_net_order(void) {
-        int i, max;
-        LRoutedNetTable count_data;
-        LRoutedNetTable::iterator iter;
-        LRoutedNetTable two_pin_data;
-        // vector<Pin*>* pin_list;
-        clock_t start, finish;
+void sort_net_order(void)
+{
+    int i, max;
+    LRoutedNetTable count_data;
+    LRoutedNetTable::iterator iter;
+    LRoutedNetTable two_pin_data;
+    // vector<Pin*>* pin_list;
+    clock_t start, finish;
 #ifdef CHANGE_VIA_DENSITY
-        double times;
+    double times;
 #endif
-        int *temp_net_order;
+    int *temp_net_order;
 
-        max = rr_map->get_netNumber();
-        // re-disturibte net
-        multi_pin_net = (MULTIPIN_NET_NODE *)malloc(sizeof(MULTIPIN_NET_NODE) * max);
-        assert(multi_pin_net);
-        // std::cout << "?\n";
-        // 	find_group(max); // for comp_temp_net_order
-        // std::cout << "?\n";
+    max = rr_map->get_netNumber();
+    // re-disturibte net
+    multi_pin_net = (MULTIPIN_NET_NODE *)malloc(sizeof(MULTIPIN_NET_NODE) * max);
+    assert(multi_pin_net);
+    // std::cout << "?\n";
+    // 	find_group(max); // for comp_temp_net_order
+    // std::cout << "?\n";
 
-        initial_overflow_map();
+    initial_overflow_map();
 
-        temp_net_order = (int *)malloc(sizeof(int) * max);
-        for (i = 0; i < max; ++i)
-            temp_net_order[i] = i;
-        qsort(temp_net_order, max, sizeof(int), comp_temp_net_order);
-        start = clock();
+    temp_net_order = (int *)malloc(sizeof(int) * max);
+    for (i = 0; i < max; ++i)
+        temp_net_order[i] = i;
+    qsort(temp_net_order, max, sizeof(int), comp_temp_net_order);
+    start = clock();
 
 #ifdef CHANGE_VIA_DENSITY
-        for (times = 0.8; times <= 1.2; times += 0.2) {
-            initial_overflow_map();
-            multiply_viadensity_map_by_times(times);
-            for (k = 1; k < max_zz; ++k)
-                for (i = 0; i < max_xx; ++i)
-                    for (j = 0; j < max_yy; ++j)
-                        viadensity_map[i][j][k - 1].cur = 0;
+    for (times = 0.8; times <= 1.2; times += 0.2)
+    {
+        initial_overflow_map();
+        multiply_viadensity_map_by_times(times);
+        for (k = 1; k < max_zz; ++k)
+            for (i = 0; i < max_xx; ++i)
+                for (j = 0; j < max_yy; ++j)
+                    viadensity_map[i][j][k - 1].cur = 0;
 #endif
 #ifdef POSTPROCESS
-            for (i = 0; i < max; ++i)
-                net_info[i].xy = 0;
-#endif
-            for (i = 0; i < max; ++i) {
-                if (temp_buf[3] == '0') // SOLA+APEC
-                {
-                    if (temp_buf[2] == '1') // random
-                        klat(i);
-                    else {
-                        klat(temp_net_order[i]); // others
-                    }
-                }
-                else // greedy
-                {
-                    if (temp_buf[2] == '1') // random
-                        greedy(i);
-                    else
-                        greedy(temp_net_order[i]); // others
-                }
-            }
-#ifdef CHANGE_VIA_DENSITY
-            print_via_overflow();
-            calculate_wirelength();
-            erase_cur_map_3d();
-        }
-#endif
-        printf("cost = %lld\n", global_pin_cost);
-        finish = clock();
-        printf("time = %lf\n", (double)(finish - start) / CLOCKS_PER_SEC);
-        free(temp_net_order);
-    }
-
-    void calculate_cap(void) {
-        int i, j, overflow = 0, max = 0;
-
-        for (i = 1; i < max_xx; ++i)
-            for (j = 0; j < max_yy; ++j)
-                if (congestionMap2d->edge(i, j, DIR_WEST).isOverflow()) {
-                    overflow += (congestionMap2d->edge(i, j, DIR_WEST).overUsage()); // modified
-                    if (max < congestionMap2d->edge(i, j, DIR_WEST).overUsage())
-                        max = congestionMap2d->edge(i, j, DIR_WEST).overUsage(); // modified
-                }
-        for (i = 0; i < max_xx; ++i)
-            for (j = 1; j < max_yy; ++j)
-                if (congestionMap2d->edge(i, j, DIR_SOUTH).isOverflow()) {
-                    overflow += (congestionMap2d->edge(i, j, DIR_SOUTH).overUsage()); // modified
-                    if (max < congestionMap2d->edge(i, j, DIR_SOUTH).overUsage())
-                        max = congestionMap2d->edge(i, j, DIR_SOUTH).overUsage(); // modified
-                }
-        printf("2D overflow = %d\n", overflow);
-        printf("2D max overflow = %d\n", max);
-    }
-
-    void generate_all_output(std::ofstream & fout) {
-        int i, max = rr_map->get_netNumber();
-
         for (i = 0; i < max; ++i)
-            generate_output(i, fout);
-
-        // Local nets
-        auto &deletedNet = rr_map->get_deleted_netList();
-        for (auto &net : deletedNet) {
-            // printf("%s\n(\n", net.get_name());
-            fout << net.get_name() << "\n(\n";
-            auto &pinList = net.get_pinList();
-            int maxLayer = rr_map->get_layerNumber();
-            int pin_cnt = 0;
-            for (auto &pin : pinList) {
-                ++pin_cnt;
-                int x = pin->get_tileX();
-                int y = pin->get_tileY();
-                int layer = pin->get_layerId();
-
-				// --- (2024/01/21) MF edited --- //
-                if (/*layer == 0*/ 0) {
-				/*
-				fout << x << ' ' << y << ' ' << x + 1 << ' ' << y + 1 << ' ' << "metal" << layer + 1 << '\n';
-				fout << x << ' ' << y << ' ' << x + 1 << ' ' << y + 1 << ' ' << "metal" << layer + 2 << '\n';
-				*/
-				fout << x << ' ' << y << ' ' << layer << " " << x << ' ' << y << ' ' << layer + 1 << '\n';
-				fout << x << ' ' << y << ' ' << layer + 1 << " " << x << ' ' << y << ' ' << layer + 2 << '\n';
-				}
-				else {
-					/*
-					fout << x << ' ' << y << ' ' << x + 1 << ' ' << y + 1 << ' ' << "metal" << layer + 1 << '\n';
-					*/
-					fout << 4200*x +2100<< ' ' << 4200*y  +2100 << " metal" << layer + 1<< " " << 4200*x +2100 << ' ' << 4200*y +2100 << " metal" << layer + 2 << '\n';
-				}
-				
-                // int maxL;
-                // maxL = (layer + 3 <= maxLayer) ? layer + 3 : maxLayer;
-                // for (int l = layer + 1; l <= maxL; l++)
-                // {
-                //     // printf("%d %d %d %d %d %d\n", std::max(x - 1, 0), std::max(y - 1, 0), l,
-                //     //         std::min(x + 1, rr_map->get_gridx()),     std::max(y - 1, 0), l);
-                //     // printf("%d %d %d %d %d %d\n", std::max(x - 1, 0),                  y, l,
-                //     //         std::min(x + 1, rr_map->get_gridx()),                      y, l);
-                //     // printf("%d %d %d %d %d %d\n", std::max(x - 1, 0), std::min(y + 1, rr_map->get_gridy()), l,
-                //     //         std::min(x + 1, rr_map->get_gridx()),     std::min(y + 1, rr_map->get_gridy()), l);
-                // 	fout << rectToGuide(std::max(x - 1, 0), std::max(y - 1, 0), std::min(x + 1, rr_map->get_gridx()),
-                // std::max(y - 1, 0), l); 	fout << rectToGuide(std::max(x - 1, 0), y, std::min(x + 1,
-                // rr_map->get_gridx()), y, l); 	fout << rectToGuide(std::max(x - 1, 0), std::min(y + 1,
-                // rr_map->get_gridy()), std::min(x + 1, rr_map->get_gridx()), std::min(y + 1, rr_map->get_gridy()), l);
-
-                // }
+            net_info[i].xy = 0;
+#endif
+        for (i = 0; i < max; ++i)
+        {
+            if (temp_buf[3] == '0') // SOLA+APEC
+            {
+                if (temp_buf[2] == '1') // random
+                    klat(i);
+                else
+                {
+                    klat(temp_net_order[i]); // others
+                }
             }
-            assert(pin_cnt <= 1);
-            // printf(")\n");
-            fout << ")\n";
+            else // greedy
+            {
+                if (temp_buf[2] == '1') // random
+                    greedy(i);
+                else
+                    greedy(temp_net_order[i]); // others
+            }
         }
+#ifdef CHANGE_VIA_DENSITY
+        print_via_overflow();
+        calculate_wirelength();
+        erase_cur_map_3d();
+    }
+#endif
+    printf("cost = %lld\n", global_pin_cost);
+    finish = clock();
+    printf("time = %lf\n", (double)(finish - start) / CLOCKS_PER_SEC);
+    free(temp_net_order);
+}
 
-        // printf("%lld\n", total_via);
+void calculate_cap(void)
+{
+    int i, j, overflow = 0, max = 0;
+
+    for (i = 1; i < max_xx; ++i)
+        for (j = 0; j < max_yy; ++j)
+            if (congestionMap2d->edge(i, j, DIR_WEST).isOverflow())
+            {
+                overflow += (congestionMap2d->edge(i, j, DIR_WEST).overUsage()); // modified
+                if (max < congestionMap2d->edge(i, j, DIR_WEST).overUsage())
+                    max = congestionMap2d->edge(i, j, DIR_WEST).overUsage(); // modified
+            }
+    for (i = 0; i < max_xx; ++i)
+        for (j = 1; j < max_yy; ++j)
+            if (congestionMap2d->edge(i, j, DIR_SOUTH).isOverflow())
+            {
+                overflow += (congestionMap2d->edge(i, j, DIR_SOUTH).overUsage()); // modified
+                if (max < congestionMap2d->edge(i, j, DIR_SOUTH).overUsage())
+                    max = congestionMap2d->edge(i, j, DIR_SOUTH).overUsage(); // modified
+            }
+    printf("2D overflow = %d\n", overflow);
+    printf("2D max overflow = %d\n", max);
+}
+
+void generate_all_output(std::ofstream & fout)
+{
+    int i, max = rr_map->get_netNumber();
+
+    for (i = 0; i < max; ++i)
+        generate_output(i, fout);
+
+    // Local nets
+    auto &deletedNet = rr_map->get_deleted_netList();
+    for (auto &net : deletedNet)
+    {
+        // printf("%s\n(\n", net.get_name());
+        fout << net.get_name() << "\n(\n";
+        auto &pinList = net.get_pinList();
+        int maxLayer = rr_map->get_layerNumber();
+        int pin_cnt = 0;
+        for (auto &pin : pinList)
+        {
+            ++pin_cnt;
+            int x = pin->get_tileX();
+            int y = pin->get_tileY();
+            int layer = pin->get_layerId();
+
+            // --- (2024/01/21) MF edited --- //
+            if (/*layer == 0*/ 0)
+            {
+                /*
+                fout << x << ' ' << y << ' ' << x + 1 << ' ' << y + 1 << ' ' << "metal" << layer + 1 << '\n';
+                fout << x << ' ' << y << ' ' << x + 1 << ' ' << y + 1 << ' ' << "metal" << layer + 2 << '\n';
+                */
+                fout << x << ' ' << y << ' ' << layer << " " << x << ' ' << y << ' ' << layer + 1 << '\n';
+                fout << x << ' ' << y << ' ' << layer + 1 << " " << x << ' ' << y << ' ' << layer + 2 << '\n';
+            }
+            else
+            {
+                /*
+                fout << x << ' ' << y << ' ' << x + 1 << ' ' << y + 1 << ' ' << "metal" << layer + 1 << '\n';
+                */
+                fout << 4200 * x + 2100 << ' ' << 4200 * y + 2100 << " metal" << layer + 1 << " " << 4200 * x + 2100 << ' ' << 4200 * y + 2100 << " metal" << layer + 2 << '\n';
+            }
+
+            // int maxL;
+            // maxL = (layer + 3 <= maxLayer) ? layer + 3 : maxLayer;
+            // for (int l = layer + 1; l <= maxL; l++)
+            // {
+            //     // printf("%d %d %d %d %d %d\n", std::max(x - 1, 0), std::max(y - 1, 0), l,
+            //     //         std::min(x + 1, rr_map->get_gridx()),     std::max(y - 1, 0), l);
+            //     // printf("%d %d %d %d %d %d\n", std::max(x - 1, 0),                  y, l,
+            //     //         std::min(x + 1, rr_map->get_gridx()),                      y, l);
+            //     // printf("%d %d %d %d %d %d\n", std::max(x - 1, 0), std::min(y + 1, rr_map->get_gridy()), l,
+            //     //         std::min(x + 1, rr_map->get_gridx()),     std::min(y + 1, rr_map->get_gridy()), l);
+            // 	fout << rectToGuide(std::max(x - 1, 0), std::max(y - 1, 0), std::min(x + 1, rr_map->get_gridx()),
+            // std::max(y - 1, 0), l); 	fout << rectToGuide(std::max(x - 1, 0), y, std::min(x + 1,
+            // rr_map->get_gridx()), y, l); 	fout << rectToGuide(std::max(x - 1, 0), std::min(y + 1,
+            // rr_map->get_gridy()), std::min(x + 1, rr_map->get_gridx()), std::min(y + 1, rr_map->get_gridy()), l);
+
+            // }
+        }
+        assert(pin_cnt <= 1);
+        // printf(")\n");
+        fout << ")\n";
     }
 
-    void Layer_assignment(const std::string &guide_path) {
-        assert(&congestionMap2d->edge(1, 1, DIR_NORTH) == &congestionMap2d->edge(1, 1, FRONT));
-        assert(&congestionMap2d->edge(1, 1, DIR_SOUTH) == &congestionMap2d->edge(1, 1, BACK));
-        assert(&congestionMap2d->edge(1, 1, DIR_EAST) == &congestionMap2d->edge(1, 1, RIGHT));
-        assert(&congestionMap2d->edge(1, 1, DIR_WEST) == &congestionMap2d->edge(1, 1, LEFT));
+    // printf("%lld\n", total_via);
+}
 
-        // std::string metal5 = TESTCASE_NAME.substr(TESTCASE_NAME.size()-6, 6);
-        // is_metal5 = metal5 == "metal5";
-        // std::cout << "Is metal5 testcases: " << is_metal5 << '\n';
+void Layer_assignment(const std::string &guide_path)
+{
+    assert(&congestionMap2d->edge(1, 1, DIR_NORTH) == &congestionMap2d->edge(1, 1, FRONT));
+    assert(&congestionMap2d->edge(1, 1, DIR_SOUTH) == &congestionMap2d->edge(1, 1, BACK));
+    assert(&congestionMap2d->edge(1, 1, DIR_EAST) == &congestionMap2d->edge(1, 1, RIGHT));
+    assert(&congestionMap2d->edge(1, 1, DIR_WEST) == &congestionMap2d->edge(1, 1, LEFT));
 
-        // string outputFileName(outputFileNamePtr);
-        // int i;
+    // std::string metal5 = TESTCASE_NAME.substr(TESTCASE_NAME.size()-6, 6);
+    // is_metal5 = metal5 == "metal5";
+    // std::cout << "Is metal5 testcases: " << is_metal5 << '\n';
 
-        via_cost = 1;
+    // string outputFileName(outputFileNamePtr);
+    // int i;
 
-        max_xx = rr_map->get_gridx();
-        max_yy = rr_map->get_gridy();
-        max_zz = rr_map->get_layerNumber();
-        cout << max_xx << ' ' << max_yy << ' ' << max_zz << '\n';
-        malloc_space();
+    via_cost = 1;
+
+    max_xx = rr_map->get_gridx();
+    max_yy = rr_map->get_gridy();
+    max_zz = rr_map->get_layerNumber();
+    cout << max_xx << ' ' << max_yy << ' ' << max_zz << '\n';
+    malloc_space();
 #ifdef READ_OUTPUT
-        printf("reading output...\n");
-        // read_output();
-        printf("reading output complete\n");
+    printf("reading output...\n");
+    // read_output();
+    printf("reading output complete\n");
 #endif
-        calculate_cap();
-        initial_3D_coordinate_map();
-        find_overflow_max();
-        puts("Layerassignment processing...");
+    calculate_cap();
+    initial_3D_coordinate_map();
+    find_overflow_max();
+    puts("Layerassignment processing...");
 #ifdef FROM2D
 #ifdef POSTPROCESS
-        net_info = (NET_INFO_NODE *)malloc(sizeof(NET_INFO_NODE) * rr_map->get_netNumber());
+    net_info = (NET_INFO_NODE *)malloc(sizeof(NET_INFO_NODE) * rr_map->get_netNumber());
 #endif
-        sort_net_order();
+    sort_net_order();
 
-        print_max_overflow();
+    print_max_overflow();
 #ifdef POSTPROCESS
-        // refinement();
+    // refinement();
 #endif
 #endif
-        puts("Layerassignment complete.");
+    puts("Layerassignment complete.");
 #ifdef VIA_DENSITY
-        // print_via_overflow();
+    // print_via_overflow();
 #endif
-        free_malloc_space();
-        calculate_wirelength();
+    free_malloc_space();
+    calculate_wirelength();
 #ifdef PRINT_OVERFLOW
-        print_max_overflow();
+    print_max_overflow();
 #endif
 #ifdef ALLOUTPUT
-        // printf("Outputing result file to %s\n", outputFileName.c_str());
-        std::cout << "Outputing result file to " << guide_path << "\n";
-        std::ofstream fout(guide_path);
-        malloc_BFS_color_map();
-        initial_BFS_color_map();
+    // printf("Outputing result file to %s\n", outputFileName.c_str());
+    std::cout << "Outputing result file to " << guide_path << "\n";
+    std::ofstream fout(guide_path);
+    malloc_BFS_color_map();
+    initial_BFS_color_map();
 
-        // int stdout_fd = dup(1);
-        // FILE* outputFile = freopen(outputFileName.c_str(), "w", stdout);
-        io_start = std::chrono::high_resolution_clock::now();
-        generate_all_output(fout);
-        io_end = std::chrono::high_resolution_clock::now();
-        fout.close();
+    // int stdout_fd = dup(1);
+    // FILE* outputFile = freopen(outputFileName.c_str(), "w", stdout);
+    io_start = std::chrono::high_resolution_clock::now();
+    generate_all_output(fout);
+    io_end = std::chrono::high_resolution_clock::now();
+    fout.close();
 
-        std::cout << "DP TIME: " << DP_TIME << '\n';
-        //   fclose(outputFile);
+    std::cout << "DP TIME: " << DP_TIME << '\n';
+    //   fclose(outputFile);
 
-        // stdout = fdopen(stdout_fd, "w");
-        free_BFS_color_map();
+    // stdout = fdopen(stdout_fd, "w");
+    free_BFS_color_map();
 #endif
 #ifdef CHECK_PATH
-        check_path();
+    check_path();
 #endif
-    }
+}

@@ -277,6 +277,7 @@ void initial_for_post_processing()
 		}
 	}
 	mazeroute->clear_net_tree();
+
 }
 
 void Post_processing(void)
@@ -318,6 +319,8 @@ void Post_processing(void)
             if (total_no_overflow || cur_overflow == 0) break;
             BOXSIZE_INC += inc_num;
             reallocate_two_pin_list(true);
+			std::cout << "iteration " << i+1 << " memory usage:\n";
+			printMemoryUsage();
         }
     }
 
@@ -327,6 +330,7 @@ void Post_processing(void)
 	}
 
     delete cache;
+	if(mazeroute_in_range !=NULL) delete mazeroute_in_range;
 
 #ifdef MESSAGE
 	puts("maze routing complete successfully");

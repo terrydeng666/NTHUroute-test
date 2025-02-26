@@ -512,7 +512,7 @@ int main(int argc, char *argv[])
 	    la_end = std::chrono::high_resolution_clock::now();
     }
     printMemoryUsage();
-    std::cout << "main() || construct_2d_tree() || end" << std::endl;
+    std::cout << "main() || Layer_assignment() || end" << std::endl;
     std::cout << "====================================" << std::endl;
     std::cout << "====================================" << std::endl;
     std::cout << "====================================" << std::endl;

@@ -133,7 +133,7 @@ Edge_2d::Edge_2d()
 
 	  history(1),
 
-	  used_net(5)
+	  used_net(128)
 
 {
 }
@@ -1836,9 +1836,10 @@ void update_congestion_map_insert_two_pin_net(Two_pin_element_2d *element)
 			congestionMap2d->edge(element->path[i]->x, element->path[i]->y, dir).used_net.insert(pair<int, int>(element->net_id, 1));
 
 		if (!insert_result.second)
-
+		{
 			++((insert_result.first)->second);	// insert the routing edge
-
+			//  std::cout << static_cast<int>(insert_result.first->second) << " ";
+		}
 		else
 
 		{
@@ -4142,6 +4143,7 @@ double construct_2d_tree(RoutingRegion *rr)
 
 #ifdef FREE
 	free_memory_con2d();
+	delete gridcell;
 #endif
 #ifdef MESSAGE
 	cout << "================================================================" << endl;

@@ -230,7 +230,7 @@ public:
 };
 
 typedef std::unordered_map<int, int> LRoutedNetTable;
-
+typedef std::unordered_set<int> L_routed_net_table;
 class Edge_3d
 {
 
@@ -246,7 +246,8 @@ public:
 
     set<Two_pin_element *> used_two_pin;
 
-    LRoutedNetTable used_net;
+    // LRoutedNetTable used_net;
+    L_routed_net_table used_net;
 };
 
 typedef Edge_2d *Edge_2d_ptr;

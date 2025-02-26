@@ -68,7 +68,7 @@ static void init_gridcell()
 
 void route_all_2pin_net(void )
 {
-	vector<Point_fc *> all_cells;
+	// vector<Point_fc *> all_cells;  	???
 	
 	init_gridcell(); 
 	
@@ -125,8 +125,10 @@ static int determine_is_terminal_or_steiner_point(int xx, int yy, int dir, int n
 
     dir = dirTransferTable[dir];
 	
-    if(terminalMap->color(xx, yy) == net_id) {  
-        for (int i = 3; i >= 0; --i) {
+    if(terminalMap->color(xx, yy) == net_id) 
+	{  
+        for (int i = 3; i >= 0; --i) //check four direction for this point and 
+		{
             if (i != dir)  
             {
                  if((i == 3 && xx >= gridxMinusOne) || 
@@ -135,17 +137,20 @@ static int determine_is_terminal_or_steiner_point(int xx, int yy, int dir, int n
                     (i == 0 && yy >= gridyMinusOne) ) continue;
                  else
                 {
-                    if(congestionMap2d->edge(xx, yy, i).lookupNet(net_id))
+                    if(congestionMap2d->edge(xx, yy, i).lookupNet(net_id))	//same net
                     {
-                        return -3;
+                        return -3;// non one degree terminal
                     }
                 }
             }
         }
-        return -4;  
-    } else {
+        return -4;  //one-degree terminal?
+    } 
+	else 
+	{
         int other_passed_edge = 0;
-        for (int i = 3; i >= 0; --i) {
+        for (int i = 3; i >= 0; --i) 
+		{
             if (i != dir)  
             {
                  if((i == 3 && xx >= gridxMinusOne) || 
@@ -158,14 +163,14 @@ static int determine_is_terminal_or_steiner_point(int xx, int yy, int dir, int n
                     {
                         ++other_passed_edge;				
                         find_dir = i;
-                        if((other_passed_edge & 0x02) != 0) return -1;
+                        if((other_passed_edge & 0x02) != 0) return -1;	//more than two degree steiner point
                     }
                 }
             }
         }
         if(other_passed_edge == 0)
-            return -2;      
-        else return find_dir;   
+            return -2;      //one degree steiner point
+        else return find_dir;   // two degree steiner point , use original direction
     }
 }
 
@@ -194,7 +199,7 @@ void bfs_for_find_two_pin_list(Coordinate_2d *start_coor, int net_id, bool inser
 
 	while (head_index != tail_index)
 	{
-		for (i = 0; i <= 3; ++i)
+		for (i = 0; i <= 3; ++i) // check four direction
 		{
 			if (i == parent[head_index])
 				continue;
@@ -204,15 +209,17 @@ void bfs_for_find_two_pin_list(Coordinate_2d *start_coor, int net_id, bool inser
 			if (x+dir_array[dir][0] >= 0 && 
                 x+dir_array[dir][0] < rr_map->get_gridx() &&
                 y+dir_array[dir][1] >= 0 && 
-                y+dir_array[dir][1] < rr_map->get_gridy() )
+                y+dir_array[dir][1] < rr_map->get_gridy() )				//grid legal area
 			{
                 if(congestionMap2d->edge(x, y, dir).lookupNet(net_id))
 				{
 					Two_pin_element_2d* two_pin;
-					if (two_pin_list_size >= (int)two_pin_list.size())
+					if (two_pin_list_size >= (int)two_pin_list.size())  //used_two_pin_list_size >= two pin list.size()
 					{
 						two_pin = new Two_pin_element_2d();
-					}else{
+					}
+					else
+					{
 						two_pin = two_pin_list[two_pin_list_size];
                     }
 					two_pin->pin1.x = queue[head_index]->x;
@@ -226,7 +233,13 @@ void bfs_for_find_two_pin_list(Coordinate_2d *start_coor, int net_id, bool inser
 						xx = x+dir_array[dir][0];
 						yy = y+dir_array[dir][1];
 						ori_dir = dir;
+
 						dir = determine_is_terminal_or_steiner_point(xx,yy,dir,net_id);
+						//-4:one degree terminal
+						//-3:non one degree terminal
+						//-2:one degree steiner point
+						//-1:more than two degree steiner point
+						//else: two degree steiner point, use original direction
 						two_pin->path.push_back(&coor_array[xx][yy]);
 						if (dir<0 && dir!=-2)
 						{
@@ -261,8 +274,9 @@ void bfs_for_find_two_pin_list(Coordinate_2d *start_coor, int net_id, bool inser
 									tail_index++;
 								}
                                 traverseMap->color(xx, yy) = net_id;
-							}else
-							{
+							}
+							else
+							{	
 								update_congestion_map_remove_two_pin_net(two_pin);
                                 NetDirtyBit[two_pin->net_id] = true;
 								if (two_pin_list_size>=(int)two_pin_list.size())
@@ -272,7 +286,8 @@ void bfs_for_find_two_pin_list(Coordinate_2d *start_coor, int net_id, bool inser
 								}
 							}
 							break;
-						}else if (dir==-2)
+						}
+						else if (dir==-2)
 						{
 							update_congestion_map_remove_two_pin_net(two_pin);
                             NetDirtyBit[two_pin->net_id] = true;
@@ -319,17 +334,22 @@ void reallocate_two_pin_list(bool insert_to_branch)
     traverseMap = new VertexColorMap<int>(rr_map->get_gridx(), rr_map->get_gridy(), -1);
     terminalMap = new VertexColorMap<int>(rr_map->get_gridx(), rr_map->get_gridy(), -1);
 	
-	reset_c_map_used_net_to_one();
+	reset_c_map_used_net_to_one();	//why?
 
 	two_pin_list_size = 0;
 
     int usedTwoPinListSize = 0;
-	for (int twoPinListPos = 0; twoPinListPos < (int)two_pin_list.size(); ++twoPinListPos) {
-        if( NetDirtyBit[ two_pin_list[twoPinListPos]->net_id ] == false ) {
-            if(usedTwoPinListSize != twoPinListPos) {
+	for (int twoPinListPos = 0; twoPinListPos < (int)two_pin_list.size(); ++twoPinListPos) 
+	{
+        if( NetDirtyBit[ two_pin_list[twoPinListPos]->net_id ] == false ) 
+		{
+            if(usedTwoPinListSize != twoPinListPos) 
+			{
                 swap(two_pin_list[twoPinListPos], two_pin_list[usedTwoPinListSize]);
                 ++usedTwoPinListSize;
-            } else {
+            } 
+			else 
+			{
                 ++usedTwoPinListSize;
             }
         }
@@ -337,8 +357,10 @@ void reallocate_two_pin_list(bool insert_to_branch)
     
 	two_pin_list_size = usedTwoPinListSize;
 
-	for (int netId = 0; netId < rr_map->get_netNumber(); ++netId) {
-        if( NetDirtyBit[netId] == true ) {
+	for (int netId = 0; netId < rr_map->get_netNumber(); ++netId) 
+	{
+        if( NetDirtyBit[netId] == true ) 
+		{
             put_terminal_color_on_colormap(netId);
             int xx = rr_map->get_nPin(netId)[0]->get_tileX();
             int yy = rr_map->get_nPin(netId)[0]->get_tileY();
