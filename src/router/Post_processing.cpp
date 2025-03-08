@@ -200,16 +200,12 @@ void initial_for_post_processing()
                 }
             }
 
-			// if (two_pin_list[id]->net_id == 892)
-			// 	std::cout << "After mn, bound_cost = " << bound_cost << '\n';
 
 			if (find_path_flag && check_path_no_overflow(bound_path,two_pin_list[id]->net_id,true))
 			{
 			}else
 			{
-				// if (two_pin_list[id]->net_id == 892) {
-				// 	std::cout << "Do maze route\n";
-				// }
+
 				Coordinate_2d start,end;
 				start.x = min(two_pin_list[id]->pin1.x,two_pin_list[id]->pin2.x);
 				end.x = max(two_pin_list[id]->pin1.x,two_pin_list[id]->pin2.x);
@@ -266,13 +262,7 @@ void initial_for_post_processing()
 
 
 			update_congestion_map_insert_two_pin_net(two_pin_list[id]);
-			// if (two_pin_list[id]->net_id == 892)
-			// {
-			// 	compute_path_total_cost_and_distance(two_pin_list[id], &mn);
-			// // bound_cost = mn.total_cost;
-			// 	cout << "bound_cost after maze route: " << mn.total_cost << endl;
-			// }
-			
+
 			delete(bound_path);
 		}
 	}
@@ -319,68 +309,25 @@ void Post_processing(void)
             if (total_no_overflow || cur_overflow == 0) break;
             BOXSIZE_INC += inc_num;
             reallocate_two_pin_list(true);
-			std::cout << "iteration " << i+1 << " memory usage:\n";
-			printMemoryUsage();
+			// std::cout << "iteration " << i+1 << " memory usage:\n";
+			// printMemoryUsage();
         }
     }
 
-
-	for (int i=0; i < (int)two_pin_list.size(); ++i) {
-		insert_all_two_pin_list(two_pin_list[i]);
-	}
-
     delete cache;
-	if(mazeroute_in_range !=NULL) delete mazeroute_in_range;
-
+	delete mazeroute_in_range;
+	for(Two_pin_element_2d * twopin : two_pin_list)
+    {
+        delete twopin;
+    }
+	for(Two_pin_list_2d* tmp_two_pin_list : net_2pin_list)
+    {
+        delete tmp_two_pin_list;
+    }
 #ifdef MESSAGE
 	puts("maze routing complete successfully");
 #endif
 	init_3d_map();	        //allocate space
 	output_3d_map();	    //assign max_cap
-/*
-	unordered_map<int, bool> through_of_edge_nets_and_through_zero;
-	// ofstream fout("grid.txt");
-	int fuck_edge_cnt = 0;
-	for (int i=0; i<two_pin_list.size(); ++i) {
-		for(int j=two_pin_list[i]->path.size()-2; j >= 0; --j)
-		{
-			int dir = get_direction_2d(two_pin_list[i]->path[j], two_pin_list[i]->path[j+1]);
-			DirectionType dirType = static_cast<DirectionType>(Jr2JmDirArray[dir]);
-			int x = two_pin_list[i]->path[j]->x;
-			int y = two_pin_list[i]->path[j]->y;
-			// if (two_pin_list[i]->net_id == 892) {
-			// 	// std::cout << "(" << x << ", " << y << "), dir: " << dir << " dem: " << congestionMap2d->edge(x, y, dirType).cur_cap << ", cap: " << congestionMap2d->edge(x, y, dirType).max_cap << '\n'; 
-			// 	fout << x << " " << y << "\n"; 
-			// }
-			if (congestionMap2d->edge(x, y, dirType).isOverflow()) {
-				if (sign(congestionMap2d->edge(x, y, dirType).max_cap) == 0) {
-					// std::cout << "Fucking edge: " << x << ' ' << y << ' ' << dir << ' ' << congestionMap2d->edge(x, y, dirType).cur_cap << ' ' << congestionMap2d->edge(x, y, dirType).max_cap << '\n';
-					fuck_edge_cnt++;
-					through_of_edge_nets_and_through_zero[two_pin_list[i]->net_id] = true;
-					for (int k=0; k<rr_map->get_layerNumber(); ++k) {
-						if (dir == LEFT)
-							assert(rr_map->capacity(k, x, y, x-1, y) == 0);
-						if (dir == RIGHT)
-							assert(rr_map->capacity(k, x, y, x+1, y) == 0);
-						if (dir == FRONT)
-							assert(rr_map->capacity(k, x, y, x, y+1) == 0);
-						if (dir == BACK)
-							assert(rr_map->capacity(k, x, y, x, y-1) == 0);
-					}
-					// break;
-				} else {
-					if (!through_of_edge_nets_and_through_zero[two_pin_list[i]->net_id])
-						through_of_edge_nets_and_through_zero[two_pin_list[i]->net_id] = false;
-				}
-			}
-		}
-		
-	}
-	// fout.close();
-	std::cout << "Fuck edge cnt = " << fuck_edge_cnt << '\n';
-	std::cout << "#OF nets:" << through_of_edge_nets_and_through_zero.size() << '\n';
-	// for (auto &[net_id, through_zero] : through_of_edge_nets_and_through_zero) {
-	// 	std::cout << "net id: " << net_id << ' ' << "through_zero: " << through_zero << '\n';
-	// }
-*/
+
 }

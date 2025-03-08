@@ -3,7 +3,7 @@
 
 #include "Route_2pinnets.h"
 #include "misc/geometry.h"
-
+#include <memory>
 #define INTERVAL_NUM 10
 #define EXPAND_RANGE_SIZE 10
 #define EXPAND_RANGE_INC 1
@@ -37,7 +37,7 @@ class Interval_element
 	public:
 		double begin_value;
 		double end_value;
-		vector<Grid_edge_element*> grid_edge_vector;
+		vector<unique_ptr<Grid_edge_element>> grid_edge_vector;
 };
 
 //EXTERN FUNCTIONS

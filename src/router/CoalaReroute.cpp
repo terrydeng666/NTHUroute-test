@@ -990,7 +990,7 @@ void Coala::CoalaReroute::aStar3D(std::vector<std::vector<std::shared_ptr<Jm::Se
 
                 {
 
-                    edgeDem = cur_map_3d[cur->p.x][cur->p.y][cur->p.z].edge_list[d]->cur_dem;
+                    // edgeDem = cur_map_3d[cur->p.x][cur->p.y][cur->p.z].edge_list[d]->cur_dem;
 
                     edgeMaxCapcity = cur_map_3d[cur->p.x][cur->p.y][cur->p.z].edge_list[d]->max_cap;
                 }

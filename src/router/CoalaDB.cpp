@@ -307,20 +307,20 @@ void CoalaDB::CoalaDataBase::getNetPath()
                 {
                     int cx = current->x + dir_2d[d][0];
                     int cy = current->y + dir_2d[d][1];
-                    if (cx >= 0 && cx < x_size && cy >= 0 && cy < y_size && congestionMap2d->edge(current->x, current->y, d).lookupNet(i))
-                    {
-                        if (path_map[cx][cy].inSeg == true)
-                        {
-                            if (d < 2)
-                                lastSeg = make_shared<Jm::Segment_2d>(i, Jm::Coordinate_2d(cx, cy), Jm::Coordinate_2d(current->x, current->y), Jm::Vertical);
-                            else
-                                lastSeg = make_shared<Jm::Segment_2d>(i, Jm::Coordinate_2d(cx, cy), Jm::Coordinate_2d(current->x, current->y), Jm::Horizontal);
+                    // if (cx >= 0 && cx < x_size && cy >= 0 && cy < y_size && congestionMap2d->edge(current->x, current->y, d).lookupNet(i))
+                    // {
+                    //     if (path_map[cx][cy].inSeg == true)
+                    //     {
+                    //         if (d < 2)
+                    //             lastSeg = make_shared<Jm::Segment_2d>(i, Jm::Coordinate_2d(cx, cy), Jm::Coordinate_2d(current->x, current->y), Jm::Vertical);
+                    //         else
+                    //             lastSeg = make_shared<Jm::Segment_2d>(i, Jm::Coordinate_2d(cx, cy), Jm::Coordinate_2d(current->x, current->y), Jm::Horizontal);
 
-                            lastSeg->sortPoint();
-                            curSeg.emplace_back(lastSeg);
-                            break;
-                        }
-                    }
+                    //         lastSeg->sortPoint();
+                    //         curSeg.emplace_back(lastSeg);
+                    //         break;
+                    //     }
+                    // }
                 }
             }
             lastPoint = *current;
@@ -329,23 +329,23 @@ void CoalaDB::CoalaDataBase::getNetPath()
             {
                 x = current->x + dir_2d[d][0];
                 y = current->y + dir_2d[d][1];
-                if (x >= 0 && x < x_size && y >= 0 && y < y_size && congestionMap2d->edge(current->x, current->y, d).lookupNet(i))
-                {
-                    if (path_map[x][y].val == 0 || path_map[x][y].val == -2)
-                    {
-                        lastPointNeighborCount++;
-                        if (path_map[x][y].val == 0)
-                        {
-                            path_map[x][y].val = 1;
-                        }
-                        else
-                        {
-                            path_map[x][y].val = 2;
-                        }
-                        visited.emplace_back(&path_map[x][y]);
-                        q.push(&coor_array[x][y]);
-                    }
-                }
+                // if (x >= 0 && x < x_size && y >= 0 && y < y_size && congestionMap2d->edge(current->x, current->y, d).lookupNet(i))
+                // {
+                //     if (path_map[x][y].val == 0 || path_map[x][y].val == -2)
+                //     {
+                //         lastPointNeighborCount++;
+                //         if (path_map[x][y].val == 0)
+                //         {
+                //             path_map[x][y].val = 1;
+                //         }
+                //         else
+                //         {
+                //             path_map[x][y].val = 2;
+                //         }
+                //         visited.emplace_back(&path_map[x][y]);
+                //         q.push(&coor_array[x][y]);
+                //     }
+                // }
             }
         }
         while (!visited.empty())

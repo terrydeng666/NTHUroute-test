@@ -135,12 +135,7 @@ void parallel_prefix_sum(long long *input, long long *output, long long n) {
 
     // std::vector<long long> padded_input(padded_size);
     long long *padded_input;
-    try {
-        padded_input = new long long[padded_size];
-    } catch (std::bad_alloc&) {
-        std::cout << "No memory\n";
-        exit(0);
-    }
+    padded_input = new long long[padded_size];
     // std::copy(input.begin(), input.end(), padded_input.begin());
 
 

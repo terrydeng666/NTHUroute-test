@@ -242,12 +242,9 @@ public:
 
     int cur_cap;
 
-    int cur_dem = 0;
-
-    set<Two_pin_element *> used_two_pin;
-
+    // int cur_dem = 0;
     // LRoutedNetTable used_net;
-    L_routed_net_table used_net;
+    // L_routed_net_table used_net;
 };
 
 typedef Edge_2d *Edge_2d_ptr;
@@ -303,7 +300,6 @@ extern const int Jr2JmDirArray[4];
 extern EdgePlane<Edge_2d> *congestionMap2d;
 
 extern vector<Two_pin_element_2d *> two_pin_list;
-
 extern int two_pin_list_size;
 
 extern int flute_mode;
@@ -322,7 +318,7 @@ extern int fail_find_path_count;
 
 extern Vertex_3d ***cur_map_3d;
 
-extern vector<Two_pin_element *> all_two_pin_list;
+// extern vector<Two_pin_element *> all_two_pin_list;
 
 extern RoutingRegion *rr_map;
 
@@ -343,7 +339,7 @@ extern Tree *net_flutetree;
 extern EdgePlane<CacheEdge> *cache;
 
 #include "MM_mazeroute.h"
-
+// extern bool netid_lookup_net(int net_id ,int x ,int y ,DirectionType dir);
 extern Multisource_multisink_mazeroute *mazeroute_in_range;
 
 extern void update_congestion_map_insert_two_pin_net(Two_pin_element_2d *element);
@@ -365,8 +361,6 @@ extern bool monotonic_pattern_route(int x1, int y1,
                                     int bound_via_num,
 
                                     bool bound_flag);
-
-extern void insert_all_two_pin_list(Two_pin_element_2d *mn_path_2d);
 
 extern double get_cost_2d(int i, int j, int dir, int net_id, int *distance);
 

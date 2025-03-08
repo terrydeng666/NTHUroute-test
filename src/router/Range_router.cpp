@@ -6,14 +6,14 @@
 
 #include "misc/geometry.h"
 #include "util/traversemap.h"
-
+#include <memory>
 #include <cmath>
 #include <algorithm>
 
 using namespace Jm;
 using namespace std;
 
-static vector<Range_element*> range_vector;
+static vector<unique_ptr<Range_element>> range_vector;
 static Interval_element interval_list[INTERVAL_NUM];
 
 static int total_twopin=0;
@@ -40,13 +40,6 @@ static bool double_equal(double a,double b)
 	if (diff>0.00001 || diff<-0.00001)
 		return false;
     else return true;
-}
-
-/*sort grid_edge in decending order*/
-static bool comp_grid_edge(const Grid_edge_element* a, const Grid_edge_element* b)
-{
-	return congestionMap2d->edge(a->grid->x, a->grid->y, a->dir).congestion() >
-           congestionMap2d->edge(b->grid->x, b->grid->y, b->dir).congestion();
 }
 
 /*
@@ -103,9 +96,6 @@ void define_interval()
 	interval_list[intervalCount-1].end_value = 1;
 	for (int i = 0; i < intervalCount; ++i)
 	{
-        for(int j = interval_list[i].grid_edge_vector.size()-1; j >=0; --j) {
-            delete interval_list[i].grid_edge_vector[j];
-        }
 		interval_list[i].grid_edge_vector.clear();
 	}
 #ifdef MESSAGE
@@ -126,7 +116,7 @@ static void insert_to_interval(double cong_value,Coordinate_2d* coor_2d, int dir
                (double_equal(cong_value, interval_list[i].begin_value) == true) ) 
              && cong_value > interval_list[i].end_value)
         {
-            interval_list[i].grid_edge_vector.push_back(new Grid_edge_element(coor_2d,dir));
+            interval_list[i].grid_edge_vector.emplace_back(new Grid_edge_element(coor_2d,dir));
             return;
         } 
 	}
@@ -309,7 +299,7 @@ static void expand_range(int x1, int y1, int x2, int y2, int interval_index)
     start.y = max(start.y-extraExpandRange,0);
     end.y = min(end.y+extraExpandRange,rr_map->get_gridy()-1);
 
-	range_vector.push_back(new Range_element(start.x, start.y, end.x, end.y));
+	range_vector.emplace_back(new Range_element(start.x, start.y, end.x, end.y));
 }
 
 //Rip-up the path that pass any overflowed edges, then route with monotonic 
@@ -464,13 +454,14 @@ void specify_all_range(void)
 	
 	total_twopin = 0;
 	for (int i = intervalCount - 1; i >= 0; --i) {
-        for(int s = range_vector.size() - 1; s >= 0; --s) {
-            delete range_vector[s];
-        }
 		range_vector.clear();
 		sort(interval_list[i].grid_edge_vector.begin(),	//sort edge in same interval by congestion
              interval_list[i].grid_edge_vector.end(),
-             comp_grid_edge);
+             [&](const auto &a, const auto &b)
+			{
+				return congestionMap2d->edge(a->grid->x, a->grid->y, a->dir).congestion() >
+					   congestionMap2d->edge(b->grid->x, b->grid->y, b->dir).congestion();
+			});
 
 		for (int j = 0; j<(int)interval_list[i].grid_edge_vector.size(); ++j)
 		{
@@ -514,7 +505,7 @@ void specify_all_range(void)
 
     delete expandMap;
     delete routeStateMap;
-
+	
 	twopin_list.clear();
 	int length = two_pin_list.size();
 	for (int i=0; i<length; ++i)

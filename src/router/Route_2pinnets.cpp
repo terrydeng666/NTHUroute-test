@@ -334,7 +334,7 @@ void reallocate_two_pin_list(bool insert_to_branch)
     traverseMap = new VertexColorMap<int>(rr_map->get_gridx(), rr_map->get_gridy(), -1);
     terminalMap = new VertexColorMap<int>(rr_map->get_gridx(), rr_map->get_gridy(), -1);
 	
-	reset_c_map_used_net_to_one();	//why?
+	// reset_c_map_used_net_to_one();	//why?
 
 	two_pin_list_size = 0;
 

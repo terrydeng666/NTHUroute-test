@@ -4,26 +4,9 @@
 #include <math.h>
 #include "flute.h"
 
-#if D<=7
-#define MGROUP 5040/4  // Max. # of groups, 7! = 5040
-#define MPOWV 15  // Max. # of POWVs per group
-#elif D==8
-#define MGROUP 40320/4  // Max. # of groups, 8! = 40320
-#define MPOWV 33  // Max. # of POWVs per group
-#elif D==9
-#define MGROUP 362880/4  // Max. # of groups, 9! = 362880
-#define MPOWV 79  // Max. # of POWVs per group
-#endif
 int numgrp[10]={0,0,0,0,6,30,180,1260,10080,90720};
 
-struct csoln
-{
-    unsigned char parent;
-    unsigned char seg[11];  // Add: 0..i, Sub: j..10; seg[i+1]=seg[j-1]=0
-    unsigned char rowcol[D-2];  // row = rowcol[]/16, col = rowcol[]%16,
-    unsigned char neighbor[2*D-2];
-};
-struct csoln *LUT[D+1][MGROUP];  // storing 4 .. D
+struct csoln *LUT[D+1][MGROUP] = {};  // storing 4 .. D
 int numsoln[D+1][MGROUP];
 
 struct point

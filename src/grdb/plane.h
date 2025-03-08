@@ -485,12 +485,12 @@ void EdgePlane<T>::resize(int xSize, int ySize)
     if( (xSize_ != 0) && (ySize_ != 0)) {
 
         // std::cout << "EdgePlane() || copyPlane(int xSize, int ySize, T initialValue, int edgeNumber) || resize() || if() || edgePool_ || start" << std::endl;
-        Vertex* tempv = new  Vertex(initialValue_);
+        Vertex tempv(initialValue_);
         // std::cout << "EdgePlane() || copyPlane(int xSize, int ySize, T initialValue, int edgeNumber) || resize() || if() || edgePool_ || new  Vertex(initialValue_)" << std::endl;
         // std::cout << "xSize_: " << xSize_ << " ySize_: " << ySize_ << " xSize_ * ySize_: " << xSize_ * ySize_ << std::endl;
         // std::cout << "9999999999999999999999999999999" << std::endl;
         
-        edgePool_ = new std::vector<Vertex>( (xSize_ * ySize_), *tempv);
+        edgePool_ = new std::vector<Vertex>( (xSize_ * ySize_), tempv);
         // std::cout << "9999999999999999999999999999999" << std::endl;
         // std::cout << "EdgePlane() || copyPlane(int xSize, int ySize, T initialValue, int edgeNumber) || resize() || if() || edgePool_ || end" << std::endl;
 

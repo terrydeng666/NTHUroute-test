@@ -6,7 +6,7 @@
 # This software may be used only under the terms of the SoftJin
 # Source License.  See the accompanying file LICENSE for details.
 
-CXX   = g++
+CXX   = g++ #-fsanitize=address
 
 BoostLibDir = /users/student/mr113/htdeng24/boost_1_77_0/stage/lib
 BoostIncDir = /users/student/mr113/htdeng24/boost_1_77_0
@@ -34,7 +34,7 @@ GDlibrary = -lgd
 ##  library
 
 
-DebugOptions = -g #-O3 -funroll-loops -march=nocona -finline-functions -DNDEBUG 
+DebugOptions =  #-funroll-loops -march=nocona -finline-functions -DNDEBUG 
 ##  Add -DNDEBUG to remove the debugging assertions (unwise at this stage).
 ##  You might have to remove -g or -O2 if your C++ compiler cannot
 ##  handle both together.
@@ -48,7 +48,7 @@ WarnOptions = -W -Wall -Wextra -Wno-missing-braces
 IncDirs      = -I. $(ZlibIncDir) $(FlutelibIncDir)
 CxxOptions   = $(WarnOptions) $(DebugOptions) 
 
-CXXFLAGS     = -std=c++17 $(CxxOptions) $(IncDirs) -w -fopenmp -I$(BoostIncDir) 
+CXXFLAGS     = -std=c++17 -O2 $(CxxOptions) $(IncDirs) -w -fopenmp -I$(BoostIncDir) 
 COMPILE_CXX  = $(CXX) $(CXXFLAGS)
 LINK_CXX     = $(CXX) $(CXXFLAGS) -L$(BoostLibDir)
 BoostLibraries = -lboost_system -lboost_filesystem

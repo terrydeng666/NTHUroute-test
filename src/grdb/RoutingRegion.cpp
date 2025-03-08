@@ -22,6 +22,8 @@ RoutingRegion::~RoutingRegion()
     if (routingSpace_ != NULL) delete routingSpace_;
     if (netSerial2NetId_ != NULL) delete netSerial2NetId_;
     if (pinTable_ != NULL) delete pinTable_;
+    if (deletedNetList_ != NULL) delete deletedNetList_;
+    // if (name2Index != NULL) delete name2Index;
 }
 
 // Edges' capacity information
@@ -132,7 +134,7 @@ void RoutingRegion::beginAddANet (const char* netName,
     int netId = netList_->size();
     (*netSerial2NetId_)[netSerial] = netId;
 	netList_->push_back( Net(netName, netSerial, netId, minWidth) );
-    (*name2Index)[std::string(netName)] = netSerial;
+    // (*name2Index)[std::string(netName)] = netSerial;
     // if (std::string(netName) == "pin1") {
     //     std::cout << "Net pin1's id = " << netId << '\n';
     // }

@@ -12,6 +12,7 @@ bsg_chip
 NV_NVDLA_partition_c
 mempool_cluster
 mempool_tile_wrap
+mempool_group
 )
 
 

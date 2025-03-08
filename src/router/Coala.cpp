@@ -145,420 +145,420 @@ void Coala::Layerassignment::viaAssignment(int layer)
     }
 }
 
-void Coala::Layerassignment::completeSegAssignment(int layer)
+// void Coala::Layerassignment::completeSegAssignment(int layer)
 
-{
+// {
 
-    auto layerDir = database.getLayerDir(layer);
+//     auto layerDir = database.getLayerDir(layer);
 
-    std::cout << "-----------------" << layer << "------------------\n";
+//     std::cout << "-----------------" << layer << "------------------\n";
 
-    while (!candidateSegSet.empty())
+//     while (!candidateSegSet.empty())
 
-    {
+//     {
 
-        bool assignable = true;
+//         bool assignable = true;
 
-        auto cseg = candidateSegSet.top();
+//         auto cseg = candidateSegSet.top();
 
-        cseg->seen = Jm::SegmentSeen::Yes;
+//         cseg->seen = Jm::SegmentSeen::Yes;
 
-        candidateSegSet.pop();
+//         candidateSegSet.pop();
 
-        if (cseg->vstat == Jm::Invalid)
+//         if (cseg->vstat == Jm::Invalid)
 
-        {
+//         {
 
-            invalidSegSet.emplace_back(cseg);
+//             invalidSegSet.emplace_back(cseg);
 
-            continue;
-        }
+//             continue;
+//         }
 
-        // if candidate segment dir is horizontal
+//         // if candidate segment dir is horizontal
 
-        if (cseg->dir == Jm::Horizontal && layerDir == Y)
+//         if (cseg->dir == Jm::Horizontal && layerDir == Y)
 
-        {
+//         {
 
-            int start = cseg->p1.x;
+//             int start = cseg->p1.x;
 
-            int end = cseg->p2.x;
+//             int end = cseg->p2.x;
 
-            // traverse every tile in increasing order
+//             // traverse every tile in increasing order
 
-            if (start - end == 1)
+//             if (start - end == 1)
 
-            {
+//             {
 
-                if (cur_map_3d[start][cseg->p1.y][layer].cap < 1 || cur_map_3d[end][cseg->p1.y][layer].cap < 1)
+//                 if (cur_map_3d[start][cseg->p1.y][layer].cap < 1 || cur_map_3d[end][cseg->p1.y][layer].cap < 1)
 
-                    assignable = false;
-            }
+//                     assignable = false;
+//             }
 
-            else
+//             else
 
-            {
+//             {
 
-                for (int i = start; i <= end; ++i)
+//                 for (int i = start; i <= end; ++i)
 
-                {
+//                 {
 
-                    // check if the capcity is enough
+//                     // check if the capcity is enough
 
-                    if (i != start && i != end)
+//                     if (i != start && i != end)
 
-                    {
+//                     {
 
-                        if (cur_map_3d[i][cseg->p1.y][layer].cap < 2)
+//                         if (cur_map_3d[i][cseg->p1.y][layer].cap < 2)
 
-                        {
+//                         {
 
-                            assignable = false;
+//                             assignable = false;
 
-                            break;
-                        }
-                    }
+//                             break;
+//                         }
+//                     }
 
-                    else
+//                     else
 
-                    {
+//                     {
 
-                        if (cur_map_3d[i][cseg->p1.y][layer].cap < 1)
+//                         if (cur_map_3d[i][cseg->p1.y][layer].cap < 1)
 
-                        {
+//                         {
 
-                            assignable = false;
+//                             assignable = false;
 
-                            break;
-                        }
-                    }
-                }
-            }
+//                             break;
+//                         }
+//                     }
+//                 }
+//             }
 
-            // is the seg is assignable
+//             // is the seg is assignable
 
-            if (assignable)
+//             if (assignable)
 
-            {
+//             {
 
-                // adjust tile cap and dem_pred map
+//                 // adjust tile cap and dem_pred map
 
-                if (start - end == 1)
+//                 if (start - end == 1)
 
-                {
+//                 {
 
-                    cur_map_3d[start][cseg->p1.y][layer].cap--;
+//                     cur_map_3d[start][cseg->p1.y][layer].cap--;
 
-                    cur_map_3d[start][cseg->p1.y][layer].edge_list[RIGHT]->cur_dem++;
+//                     cur_map_3d[start][cseg->p1.y][layer].edge_list[RIGHT]->cur_dem++;
 
-                    cur_map_3d[start][cseg->p1.y][layer].dem_pred--;
+//                     cur_map_3d[start][cseg->p1.y][layer].dem_pred--;
 
-                    cur_map_3d[end][cseg->p1.y][layer].cap--;
+//                     cur_map_3d[end][cseg->p1.y][layer].cap--;
 
-                    cur_map_3d[end][cseg->p1.y][layer].edge_list[RIGHT]->cur_dem++;
+//                     cur_map_3d[end][cseg->p1.y][layer].edge_list[RIGHT]->cur_dem++;
 
-                    cur_map_3d[end][cseg->p1.y][layer].dem_pred--;
-                }
+//                     cur_map_3d[end][cseg->p1.y][layer].dem_pred--;
+//                 }
 
-                else
+//                 else
 
-                {
+//                 {
 
-                    for (int i = start; i <= end; ++i)
+//                     for (int i = start; i <= end; ++i)
 
-                    {
+//                     {
 
-                        if (i != start && i != end)
+//                         if (i != start && i != end)
 
-                        {
+//                         {
 
-                            cur_map_3d[i][cseg->p1.y][layer].cap -= 2;
+//                             cur_map_3d[i][cseg->p1.y][layer].cap -= 2;
 
-                            cur_map_3d[i][cseg->p1.y][layer].edge_list[RIGHT]->cur_dem++;
+//                             cur_map_3d[i][cseg->p1.y][layer].edge_list[RIGHT]->cur_dem++;
 
-                            cur_map_3d[i][cseg->p1.y][layer].dem_pred -= 2;
-                        }
+//                             cur_map_3d[i][cseg->p1.y][layer].dem_pred -= 2;
+//                         }
 
-                        else
+//                         else
 
-                        {
+//                         {
 
-                            if (i == start)
+//                             if (i == start)
 
-                                cur_map_3d[i][cseg->p1.y][layer].edge_list[RIGHT]->cur_dem++;
+//                                 cur_map_3d[i][cseg->p1.y][layer].edge_list[RIGHT]->cur_dem++;
 
-                            cur_map_3d[i][cseg->p1.y][layer].cap--;
+//                             cur_map_3d[i][cseg->p1.y][layer].cap--;
 
-                            cur_map_3d[i][cseg->p1.y][layer].dem_pred--;
-                        }
-                    }
-                }
-            }
-        }
+//                             cur_map_3d[i][cseg->p1.y][layer].dem_pred--;
+//                         }
+//                     }
+//                 }
+//             }
+//         }
 
-        else if (cseg->dir == Jm::Vertical && layerDir == X)
+//         else if (cseg->dir == Jm::Vertical && layerDir == X)
 
-        {
+//         {
 
-            int start = cseg->p1.y;
+//             int start = cseg->p1.y;
 
-            int end = cseg->p2.y;
+//             int end = cseg->p2.y;
 
-            if (start - end == 1)
+//             if (start - end == 1)
 
-            {
+//             {
 
-                if (cur_map_3d[cseg->p1.x][start][layer].cap < 1 || cur_map_3d[cseg->p1.x][end][layer].cap < 1)
+//                 if (cur_map_3d[cseg->p1.x][start][layer].cap < 1 || cur_map_3d[cseg->p1.x][end][layer].cap < 1)
 
-                    assignable = false;
-            }
+//                     assignable = false;
+//             }
 
-            else
+//             else
 
-            {
+//             {
 
-                for (int i = start; i <= end; ++i)
+//                 for (int i = start; i <= end; ++i)
 
-                {
+//                 {
 
-                    if (i != start && i != end)
+//                     if (i != start && i != end)
 
-                    {
+//                     {
 
-                        if (cur_map_3d[cseg->p1.x][i][layer].cap < 2)
+//                         if (cur_map_3d[cseg->p1.x][i][layer].cap < 2)
 
-                        {
+//                         {
 
-                            assignable = false;
+//                             assignable = false;
 
-                            break;
-                        }
-                    }
+//                             break;
+//                         }
+//                     }
 
-                    else
+//                     else
 
-                    {
+//                     {
 
-                        if (cur_map_3d[cseg->p1.x][i][layer].cap < 1)
+//                         if (cur_map_3d[cseg->p1.x][i][layer].cap < 1)
 
-                        {
+//                         {
 
-                            assignable = false;
+//                             assignable = false;
 
-                            break;
-                        }
-                    }
-                }
-            }
+//                             break;
+//                         }
+//                     }
+//                 }
+//             }
 
-            if (assignable)
+//             if (assignable)
 
-            {
+//             {
 
-                if (start - end == 1)
+//                 if (start - end == 1)
 
-                {
+//                 {
 
-                    cur_map_3d[cseg->p1.x][start][layer].edge_list[FRONT]->cur_dem++;
+//                     cur_map_3d[cseg->p1.x][start][layer].edge_list[FRONT]->cur_dem++;
 
-                    cur_map_3d[cseg->p1.x][start][layer].cap--;
+//                     cur_map_3d[cseg->p1.x][start][layer].cap--;
 
-                    cur_map_3d[cseg->p1.x][start][layer].dem_pred--;
+//                     cur_map_3d[cseg->p1.x][start][layer].dem_pred--;
 
-                    cur_map_3d[cseg->p1.x][end][layer].edge_list[FRONT]->cur_dem++;
+//                     cur_map_3d[cseg->p1.x][end][layer].edge_list[FRONT]->cur_dem++;
 
-                    cur_map_3d[cseg->p1.x][end][layer].cap--;
+//                     cur_map_3d[cseg->p1.x][end][layer].cap--;
 
-                    cur_map_3d[cseg->p1.x][end][layer].dem_pred--;
-                }
+//                     cur_map_3d[cseg->p1.x][end][layer].dem_pred--;
+//                 }
 
-                else
+//                 else
 
-                {
+//                 {
 
-                    for (int i = start; i <= end; ++i)
+//                     for (int i = start; i <= end; ++i)
 
-                    {
+//                     {
 
-                        if (i != start && i != end)
+//                         if (i != start && i != end)
 
-                        {
+//                         {
 
-                            cur_map_3d[cseg->p1.x][i][layer].edge_list[FRONT]->cur_dem += 1;
+//                             cur_map_3d[cseg->p1.x][i][layer].edge_list[FRONT]->cur_dem += 1;
 
-                            cur_map_3d[cseg->p1.x][i][layer].cap -= 2;
+//                             cur_map_3d[cseg->p1.x][i][layer].cap -= 2;
 
-                            cur_map_3d[cseg->p1.x][i][layer].dem_pred -= 2;
-                        }
+//                             cur_map_3d[cseg->p1.x][i][layer].dem_pred -= 2;
+//                         }
 
-                        else
+//                         else
 
-                        {
+//                         {
 
-                            if (i == start)
+//                             if (i == start)
 
-                                cur_map_3d[cseg->p1.x][i][layer].edge_list[FRONT]->cur_dem += 1;
+//                                 cur_map_3d[cseg->p1.x][i][layer].edge_list[FRONT]->cur_dem += 1;
 
-                            cur_map_3d[cseg->p1.x][i][layer].cap--;
+//                             cur_map_3d[cseg->p1.x][i][layer].cap--;
 
-                            cur_map_3d[cseg->p1.x][i][layer].dem_pred--;
-                        }
-                    }
-                }
-            }
-        }
+//                             cur_map_3d[cseg->p1.x][i][layer].dem_pred--;
+//                         }
+//                     }
+//                 }
+//             }
+//         }
 
-        else if ((cseg->dir == Jm::Vertical && layerDir == Y) || (cseg->dir == Jm::Horizontal && layerDir == X))
+//         else if ((cseg->dir == Jm::Vertical && layerDir == Y) || (cseg->dir == Jm::Horizontal && layerDir == X))
 
-        {
+//         {
 
-            assignable = false;
+//             assignable = false;
 
-            nextlayerSegSet.emplace_back(cseg);
+//             nextlayerSegSet.emplace_back(cseg);
 
-            continue;
-        }
+//             continue;
+//         }
 
-        // if the segment is assignable, we need to find all the segs relative to p1 and p2
+//         // if the segment is assignable, we need to find all the segs relative to p1 and p2
 
-        if (assignable)
+//         if (assignable)
 
-        {
+//         {
 
-            cseg->stat = Jm::Placed;
+//             cseg->stat = Jm::Placed;
 
-            coalaDB.netSegsNum[cseg->netIdx]--;
+//             coalaDB.netSegsNum[cseg->netIdx]--;
 
-            cseg->layer = layer;
+//             cseg->layer = layer;
 
-            finalPath[cseg->netIdx].emplace_back(cseg);
+//             finalPath[cseg->netIdx].emplace_back(cseg);
 
-            // if p1 not found add it into endpoint set
+//             // if p1 not found add it into endpoint set
 
-            if (!isInEndPointMap(cseg->p1, cseg->netIdx))
+//             if (!isInEndPointMap(cseg->p1, cseg->netIdx))
 
-            {
+//             {
 
-                addToEndPointMap(cseg->p1, cseg->netIdx, layer);
-            }
+//                 addToEndPointMap(cseg->p1, cseg->netIdx, layer);
+//             }
 
-            if (!isInEndPointMap(cseg->p2, cseg->netIdx))
+//             if (!isInEndPointMap(cseg->p2, cseg->netIdx))
 
-            {
+//             {
 
-                addToEndPointMap(cseg->p2, cseg->netIdx, layer);
-            }
+//                 addToEndPointMap(cseg->p2, cseg->netIdx, layer);
+//             }
 
-            // add all relative seg
+//             // add all relative seg
 
-            addRelativeSeg(cseg->p1, cseg->netIdx);
+//             addRelativeSeg(cseg->p1, cseg->netIdx);
 
-            addRelativeSeg(cseg->p2, cseg->netIdx);
+//             addRelativeSeg(cseg->p2, cseg->netIdx);
 
-            auto p1Delete = deleteRedundantEP(cseg->p1, cseg->netIdx);
+//             auto p1Delete = deleteRedundantEP(cseg->p1, cseg->netIdx);
 
-            auto p2Delete = deleteRedundantEP(cseg->p2, cseg->netIdx);
+//             auto p2Delete = deleteRedundantEP(cseg->p2, cseg->netIdx);
 
-            if (p1Delete && p2Delete)
+//             if (p1Delete && p2Delete)
 
-            {
+//             {
 
-                if (cseg->p1.pinLayer != -1 && cseg->layer < cseg->p1.pinLayer)
+//                 if (cseg->p1.pinLayer != -1 && cseg->layer < cseg->p1.pinLayer)
 
-                {
+//                 {
 
-                    pointToPin.emplace_back(std::make_pair(Jm::Coordinate_2d(cseg->p1), std::make_pair(cseg->p1.pinLayer - cseg->layer, cseg->netIdx)));
-                }
+//                     pointToPin.emplace_back(std::make_pair(Jm::Coordinate_2d(cseg->p1), std::make_pair(cseg->p1.pinLayer - cseg->layer, cseg->netIdx)));
+//                 }
 
-                if (cseg->p2.pinLayer != -1 && cseg->layer < cseg->p2.pinLayer)
+//                 if (cseg->p2.pinLayer != -1 && cseg->layer < cseg->p2.pinLayer)
 
-                {
+//                 {
 
-                    pointToPin.emplace_back(std::make_pair(Jm::Coordinate_2d(cseg->p2), std::make_pair(cseg->p2.pinLayer - cseg->layer, cseg->netIdx)));
-                }
-            }
+//                     pointToPin.emplace_back(std::make_pair(Jm::Coordinate_2d(cseg->p2), std::make_pair(cseg->p2.pinLayer - cseg->layer, cseg->netIdx)));
+//                 }
+//             }
 
-            coalaDB.addIntoPointPlaced(cseg->p1, cseg->netIdx);
+//             coalaDB.addIntoPointPlaced(cseg->p1, cseg->netIdx);
 
-            coalaDB.addIntoPointPlaced(cseg->p2, cseg->netIdx);
-        }
+//             coalaDB.addIntoPointPlaced(cseg->p2, cseg->netIdx);
+//         }
 
-        else
+//         else
 
-        {
+//         {
 
-            if (cseg->dir == Jm::Horizontal)
+//             if (cseg->dir == Jm::Horizontal)
 
-            {
+//             {
 
-                int start = cseg->p1.x;
+//                 int start = cseg->p1.x;
 
-                int end = cseg->p2.x;
+//                 int end = cseg->p2.x;
 
-                for (int i = start; i <= end; ++i)
+//                 for (int i = start; i <= end; ++i)
 
-                {
+//                 {
 
-                    if (cur_map_3d[i][cseg->p1.y][layer].dem_pred > 0)
+//                     if (cur_map_3d[i][cseg->p1.y][layer].dem_pred > 0)
 
-                        cseg->demandTileNum++;
+//                         cseg->demandTileNum++;
 
-                    if (cur_map_3d[i][cseg->p1.y][layer].cap > 0)
+//                     if (cur_map_3d[i][cseg->p1.y][layer].cap > 0)
 
-                        cseg->availableTileNum++;
-                }
-            }
+//                         cseg->availableTileNum++;
+//                 }
+//             }
 
-            else
+//             else
 
-            {
+//             {
 
-                int start = cseg->p1.y;
+//                 int start = cseg->p1.y;
 
-                int end = cseg->p2.y;
+//                 int end = cseg->p2.y;
 
-                for (int i = start; i <= end; ++i)
+//                 for (int i = start; i <= end; ++i)
 
-                {
+//                 {
 
-                    if (cur_map_3d[cseg->p1.x][i][layer].dem_pred > 0)
+//                     if (cur_map_3d[cseg->p1.x][i][layer].dem_pred > 0)
 
-                        cseg->demandTileNum++;
+//                         cseg->demandTileNum++;
 
-                    if (cur_map_3d[cseg->p1.x][i][layer].cap > 0)
+//                     if (cur_map_3d[cseg->p1.x][i][layer].cap > 0)
 
-                        cseg->availableTileNum++;
-                }
-            }
+//                         cseg->availableTileNum++;
+//                 }
+//             }
 
-            remainSegSet.push(cseg);
-        }
-    }
+//             remainSegSet.push(cseg);
+//         }
+//     }
 
-    remainSegAssignment(layer);
+//     remainSegAssignment(layer);
 
-    std::cout << "remain seg assignment end ! \n";
+//     std::cout << "remain seg assignment end ! \n";
 
-    if (layer != rr_map->get_layerNumber() - 1)
+//     if (layer != rr_map->get_layerNumber() - 1)
 
-    {
+//     {
 
-        std::cout << "unplaced seg num = " << nextlayerSegSet.size() << " !\n";
+//         std::cout << "unplaced seg num = " << nextlayerSegSet.size() << " !\n";
 
-        for (auto &seg : nextlayerSegSet)
+//         for (auto &seg : nextlayerSegSet)
 
-        {
+//         {
 
-            seg->completenessRate = coalaDB.netSegsNum[seg->netIdx] / coalaDB.netSegs[seg->netIdx].size();
+//             seg->completenessRate = coalaDB.netSegsNum[seg->netIdx] / coalaDB.netSegs[seg->netIdx].size();
 
-            seg->cstat = Jm::Added;
+//             seg->cstat = Jm::Added;
 
-            candidateSegSet.push(seg);
-        }
+//             candidateSegSet.push(seg);
+//         }
 
-        nextlayerSegSet.clear();
-    }
-}
+//         nextlayerSegSet.clear();
+//     }
+// }
 
 void Coala::Layerassignment::addRelativeSeg(Jm::Coordinate_2d &p, int netIdx)
 
@@ -721,7 +721,7 @@ void Coala::Layerassignment::remainSegAssignment(int layer)
 
                     cur_map_3d[rseg->p1.x][rseg->p1.y][layer].dem_pred--;
 
-                    cur_map_3d[rseg->p1.x][rseg->p1.y][layer].edge_list[RIGHT]->cur_dem += 1;
+                    // cur_map_3d[rseg->p1.x][rseg->p1.y][layer].edge_list[RIGHT]->cur_dem += 1;
 
                     for (int i = rseg->p1.x + 1; i <= rseg->p2.x; ++i)
 
@@ -731,7 +731,7 @@ void Coala::Layerassignment::remainSegAssignment(int layer)
 
                         {
 
-                            cur_map_3d[i][rseg->p1.y][layer].edge_list[RIGHT]->cur_dem += 1;
+                            // cur_map_3d[i][rseg->p1.y][layer].edge_list[RIGHT]->cur_dem += 1;
 
                             cur_map_3d[i][rseg->p1.y][layer].cap -= 2;
 
@@ -759,7 +759,7 @@ void Coala::Layerassignment::remainSegAssignment(int layer)
 
                             cur_map_3d[i - 1][rseg->p1.y][layer].dem_pred++;
 
-                            cur_map_3d[i - 1][rseg->p1.y][layer].edge_list[RIGHT]->cur_dem -= 1;
+                            // cur_map_3d[i - 1][rseg->p1.y][layer].edge_list[RIGHT]->cur_dem -= 1;
 
                             rseg->p2.x = i - 1;
 
@@ -791,7 +791,7 @@ void Coala::Layerassignment::remainSegAssignment(int layer)
 
                     cur_map_3d[rseg->p2.x][rseg->p2.y][layer].dem_pred--;
 
-                    cur_map_3d[rseg->p2.x][rseg->p2.y][layer].edge_list[LEFT]->cur_dem += 1;
+                    // cur_map_3d[rseg->p2.x][rseg->p2.y][layer].edge_list[LEFT]->cur_dem += 1;
 
                     for (int i = rseg->p2.x - 1; i >= rseg->p1.x; --i)
 
@@ -801,7 +801,7 @@ void Coala::Layerassignment::remainSegAssignment(int layer)
 
                         {
 
-                            cur_map_3d[i][rseg->p1.y][layer].edge_list[LEFT]->cur_dem += 1;
+                            // cur_map_3d[i][rseg->p1.y][layer].edge_list[LEFT]->cur_dem += 1;
 
                             cur_map_3d[i][rseg->p1.y][layer].cap -= 2;
 
@@ -825,7 +825,7 @@ void Coala::Layerassignment::remainSegAssignment(int layer)
 
                         {
 
-                            cur_map_3d[i + 1][rseg->p1.y][layer].edge_list[LEFT]->cur_dem -= 1;
+                            // cur_map_3d[i + 1][rseg->p1.y][layer].edge_list[LEFT]->cur_dem -= 1;
 
                             cur_map_3d[i + 1][rseg->p1.y][layer].cap++;
 
@@ -866,7 +866,7 @@ void Coala::Layerassignment::remainSegAssignment(int layer)
 
                     cur_map_3d[rseg->p1.x][rseg->p1.y][layer].dem_pred--;
 
-                    cur_map_3d[rseg->p1.x][rseg->p1.y][layer].edge_list[FRONT]->cur_dem += 1;
+                    // cur_map_3d[rseg->p1.x][rseg->p1.y][layer].edge_list[FRONT]->cur_dem += 1;
 
                     coalaDB.addIntoPointPlaced(rseg->p1, rseg->netIdx);
 
@@ -882,7 +882,7 @@ void Coala::Layerassignment::remainSegAssignment(int layer)
 
                             cur_map_3d[rseg->p1.x][i][layer].dem_pred -= 2;
 
-                            cur_map_3d[rseg->p1.x][i][layer].edge_list[FRONT]->cur_dem += 1;
+                            // cur_map_3d[rseg->p1.x][i][layer].edge_list[FRONT]->cur_dem += 1;
                         }
 
                         else if (cur_map_3d[rseg->p1.x][i][layer].cap >= 1)
@@ -906,7 +906,7 @@ void Coala::Layerassignment::remainSegAssignment(int layer)
 
                             cur_map_3d[rseg->p1.x][i - 1][layer].dem_pred++;
 
-                            cur_map_3d[rseg->p1.x][i - 1][layer].edge_list[FRONT]->cur_dem -= 1;
+                            // cur_map_3d[rseg->p1.x][i - 1][layer].edge_list[FRONT]->cur_dem -= 1;
 
                             rseg->p2.y = i - 1;
 
@@ -936,7 +936,7 @@ void Coala::Layerassignment::remainSegAssignment(int layer)
 
                     cur_map_3d[rseg->p2.x][rseg->p2.y][layer].dem_pred--;
 
-                    cur_map_3d[rseg->p2.x][rseg->p2.y][layer].edge_list[BACK]->cur_dem += 1;
+                    // cur_map_3d[rseg->p2.x][rseg->p2.y][layer].edge_list[BACK]->cur_dem += 1;
 
                     coalaDB.addIntoPointPlaced(rseg->p2, rseg->netIdx);
 
@@ -948,7 +948,7 @@ void Coala::Layerassignment::remainSegAssignment(int layer)
 
                         {
 
-                            cur_map_3d[rseg->p1.x][i][layer].edge_list[BACK]->cur_dem += 1;
+                            // cur_map_3d[rseg->p1.x][i][layer].edge_list[BACK]->cur_dem += 1;
 
                             cur_map_3d[rseg->p1.x][i][layer].cap -= 2;
 
@@ -972,7 +972,7 @@ void Coala::Layerassignment::remainSegAssignment(int layer)
 
                         {
 
-                            cur_map_3d[rseg->p1.x][i + 1][layer].edge_list[BACK]->cur_dem -= 1;
+                            // cur_map_3d[rseg->p1.x][i + 1][layer].edge_list[BACK]->cur_dem -= 1;
 
                             cur_map_3d[rseg->p1.x][i + 1][layer].cap++;
 
@@ -1583,7 +1583,7 @@ void Coala::Layerassignment::generateEdgeCongestionMap(string outputFileName)
 
                 {
 
-                    outPutFile << cur_map_3d[i][j][z].edge_list[FRONT]->cur_dem << " ";
+                    // outPutFile << cur_map_3d[i][j][z].edge_list[FRONT]->cur_dem << " ";
                 }
 
                 outPutFile << "\n";
@@ -1602,7 +1602,7 @@ void Coala::Layerassignment::generateEdgeCongestionMap(string outputFileName)
 
                 {
 
-                    outPutFile << cur_map_3d[i][j][z].edge_list[RIGHT]->cur_dem << " ";
+                    // outPutFile << cur_map_3d[i][j][z].edge_list[RIGHT]->cur_dem << " ";
                 }
 
                 outPutFile << "\n";

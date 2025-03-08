@@ -88,7 +88,7 @@ class RoutingRegion : public Builder {
     NetList* netList_;
     RoutingSpace* routingSpace_;
     NetList* deletedNetList_ = new std::vector<Net>();
-    std::unordered_map<std::string,int>* name2Index = new std::unordered_map<std::string,int>();
+    // std::unordered_map<std::string,int>* name2Index = new std::unordered_map<std::string,int>();
     //First int is the net id given from input file,
     //the second id is the net position in NetList
     typedef std::unordered_map<int, int> NetIdLookupTable;
@@ -96,7 +96,7 @@ class RoutingRegion : public Builder {
 
     typedef std::set< std::tuple<int, int, int> > PinTable;
     PinTable*   pinTable_;
-    std::map<std::pair<int, int>, int> justCheck;
+    // std::map<std::pair<int, int>, int> justCheck;
 };
 
 //Inline Functions
@@ -200,10 +200,10 @@ NetList& RoutingRegion::get_deleted_netList ()
     return (*deletedNetList_);
 }
 
-inline std::unordered_map<std::string,int>&
-RoutingRegion::get_name2ID_map(){
-    return (*name2Index);
-}
+// inline std::unordered_map<std::string,int>&
+// RoutingRegion::get_name2ID_map(){
+//     return (*name2Index);
+// }
 
 inline
 const PinptrList& RoutingRegion::get_nPin(int netId){	//get Pins by net
